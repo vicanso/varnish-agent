@@ -54,7 +54,7 @@ sub vcl_recv {
   }
 
   # 不缓存数据处理
-  if(req.url ~ "\?cache=false" || req.url ~ "&cache=false" || req.http.v-nocache){
+  if(req.url ~ "^/user" || req.url ~ "\?cache=false" || req.url ~ "&cache=false" || req.http.cache-control == "no-cache"){
     return (pass);
   }
 
@@ -161,7 +161,7 @@ sub vcl_hash{
 sub health_check{
   #响应healthy检测
   if(req.url == "/ping"){
-    return(synth(200, "Healthy check success."));
+    return(synth(200, "<%= version %>"));
   }
 }
 

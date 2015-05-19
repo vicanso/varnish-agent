@@ -1,29 +1,53 @@
-var request = require('superagent');
 var _ = require('lodash');
 var co = require('co');
 var fs = require('fs');
 var path = require('path');
 var util = require('util');
+var url = require('url');
+var Etcd = require('node-etcd');
+var crypto = require('crypto');
+var spawn = require('child_process').spawn;
+var varnishBackendKey = 'varnish_backend';
+var etcdServer = process.env.ETCD || 'etcd://127.0.0.1:4001';
+var urlInfo = url.parse(etcdServer);
+var etcd = new Etcd(urlInfo.hostname, urlInfo.port);
+var currentVarnishVcl = '';
+var checkInterval = 60 * 1000;
+setTimeout(createVcl, checkInterval);
 
-co(function *(){
-  var res = yield getServers();
-  if(!res.body){
-    console.warn('server list is null');
-    return;
-  }
-  var serversList = sortServer(res.body);
-  var backendConfig = yield getBackendConfig(serversList);
-  var initConfig = yield getInitConfig(serversList);
-  var backendSelectConfig = getBackendSelectConfig(serversList);
-  var vcl = yield getVcl({
-    backendConfig : backendConfig,
-    initConfig : initConfig,
-    backendSelectConfig : backendSelectConfig
+
+/**
+ * [createVcl 生成vcl文件]
+ * @return {[type]} [description]
+ */
+function createVcl(){
+  co(function *(){
+    var serversList = yield getServers();
+    serversList = sortServer(serversList);
+    // 如果获取不到backend相关信息，不生成新的vcl
+    if(serversList.length){
+      var backendConfig = yield getBackendConfig(serversList);
+      var initConfig = yield getInitConfig(serversList);
+      var backendSelectConfig = getBackendSelectConfig(serversList);
+      var vcl = yield getVcl({
+        backendConfig : backendConfig,
+        initConfig : initConfig,
+        backendSelectConfig : backendSelectConfig
+      });
+      if(currentVarnishVcl !== vcl){
+        var result = fs.writeFileSync('/etc/varnish/default.vcl', vcl);
+        if(!result){
+          currentVarnishVcl = vcl;
+          spawn('service', ['varnish', 'reload']);
+        }
+      }
+    }
+    setTimeout(createVcl, checkInterval);
+  }).catch(function(err){
+    console.error(err);
+    setTimeout(createVcl, checkInterval);
   });
-  fs.writeFileSync('/vicanso/config/varnish.vcl', vcl);
-}).catch(function(err){
-  console.error(err);
-});
+}
 
 
 /**
@@ -47,6 +71,7 @@ function sortServer(serverList){
   return result;
 }
 
+
 /**
  * [getBackendConfig 获取backend的配置]
  * @param  {[type]} serversList [description]
@@ -68,6 +93,7 @@ function *getBackendConfig(serversList){
   });
   return arr.join('\n');
 }
+
 
 /**
  * [getInitConfig 获取init的配置]
@@ -96,11 +122,48 @@ function *getInitConfig(serversList){
   });
 }
 
+
+/**
+ * [getDate 获取日期字符串，用于生成版本号]
+ * @return {[type]} [description]
+ */
+function getDate(){
+  var date = new Date();
+  var month = date.getMonth() + 1;
+  if(month < 10){
+    month = '0' + month;
+  }
+  var day = date.getDate();
+  if(day < 10){
+    day = '0' + day;
+  }
+  var hours = date.getHours();
+  if(hours < 10){
+    hours = '0' + hours;
+  }
+  var minutes = date.getMinutes();
+  if(minutes < 10){
+    minutes = '0' + minutes;
+  }
+  var seconds = date.getSeconds();
+  if(seconds < 10){
+    seconds = '0' + seconds;
+  }
+  return '' + date.getFullYear() + '-' + month + '-' + day + 'T' + hours + ':' + minutes + ':' + seconds; 
+}
+
+
 /**
  * [getVcl 获取varnish配置]
  * @return {[type]} [description]
  */
 function *getVcl(data){
+  var date = new Date();
+  var str = '' + date.getFullYear();
+  var md5 = crypto.createHash('md5');
+  md5.update(JSON.stringify(data));
+  var version = getDate() + ' ' + md5.digest('hex');
+  data.version = version.toUpperCase();
   var tpl = yield function(done){
     var file = path.join(__dirname, './template/varnish.tpl');
     fs.readFile(file, 'utf8', done);
@@ -108,6 +171,7 @@ function *getVcl(data){
   var template = _.template(tpl);
   return template(data);
 }
+
 
 /**
  * [getBackendSelectConfig 生成backend选择的规则]
@@ -140,12 +204,15 @@ function getBackendSelectConfig(serversList){
     }
     arr.push(util.format('  set req.backend_hint = %s.backend();', item.name));
   });
-  arr.push('}');
-  _.forEach(arr, function(tmp, i){
-    arr[i] = '  ' + tmp;
-  });
+  if(arr.length){
+    arr.push('}');
+    _.forEach(arr, function(tmp, i){
+      arr[i] = '  ' + tmp;
+    });
+  }
   return arr.join('\n');
 }
+
 
 /**
  * [getServers 获取服务器列表]
@@ -153,15 +220,14 @@ function getBackendSelectConfig(serversList){
  * @return {[type]}            [description]
  */
 function *getServers(){
-  return yield function(done){
-    var file = path.join(__dirname, './ytj.json');
-    fs.readFile(file, function(err, buf){
-      var data = JSON.parse(buf);
-      done(null, {
-        body : data
-      });
-    });
-    // request.get('http://jt-service.oss-cn-shenzhen.aliyuncs.com/servers.json').end(done);
-  }
+  var result = yield function(done){
+    etcd.get(varnishBackendKey, done);
+  };
+  var nodes = _.get(result, '[0].node.nodes');
+  var backendList = [];
+  _.forEach(nodes, function(node){
+    backendList.push(JSON.parse(node.value));
+  });
+  return backendList;
 }
 
