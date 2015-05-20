@@ -1,7 +1,7 @@
 {
   "name": "generate-varnish",
   "description": "generate varnish config file",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "author": {
     "name": "vicanso 小墨鱼",
     "email": "vicansocanbico@gmail.com"
