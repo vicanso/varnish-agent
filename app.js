@@ -38,7 +38,10 @@ function createVcl(){
         var result = fs.writeFileSync('/etc/varnish/default.vcl', vcl);
         if(!result){
           currentVarnishVcl = vcl;
-          spawn('service', ['varnish', 'reload']);
+          var cmd = spawn('service', ['varnish', 'reload']);
+          cmd.on('error', function(err){
+            console.error(err);
+          });
         }
       }
     }
@@ -224,10 +227,13 @@ function *getServers(){
     etcd.get(varnishBackendKey, done);
   };
   var nodes = _.get(result, '[0].node.nodes');
-  var backendList = [];
+  var list = [];
   _.forEach(nodes, function(node){
-    backendList.push(JSON.parse(node.value));
+    list.push(node.value);
   });
+  var backendList = _.map(_.uniq(list), function(v){
+    return JSON.parse(v)
+  })
   return backendList;
 }
 

@@ -16,6 +16,7 @@
   },
   "main": "app",
   "readmeFilename": "README.md",
+  "README": "generate varnish vcl",
   "dependencies": {
     "co": "^4.5.4",
     "lodash": "^3.8.0",
