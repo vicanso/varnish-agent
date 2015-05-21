@@ -9,6 +9,7 @@ var spawn = require('child_process').spawn;
 var request = require('superagent');
 var varnishBackendKey = 'varnish_backend';
 var varnishKey = 'varnish';
+var ectdKey = '';
 var etcdServer = process.env.ETCD || 'etcd://127.0.0.1:4001';
 var urlInfo = url.parse(etcdServer);
 var currentVarnishVcl = '';
@@ -248,8 +249,8 @@ function getBackendSelectConfig(serversList){
  */
 function *getServers(){
   var result = yield function(done){
-    var etcUrl = util.format('http://%s:%s/v2/keys/%s', urlInfo.hostname, urlInfo.port, varnishBackendKey)
-    request.get(etcUrl).end(done)
+    var etcdUrl = util.format('http://%s:%s/v2/keys/%s', urlInfo.hostname, urlInfo.port, varnishBackendKey)
+    request.get(etcdUrl).end(done)
   };
   var nodes = _.get(result, 'body.node.nodes');
   var list = [];
@@ -267,26 +268,26 @@ function *getServers(){
   return backendList;
 }
 
+
 /**
  * [postVarnishConfig 将varnish的配置信息发送到etcd中]
  * @return {[type]} [description]
  */
 function postVarnishConfig(){
-  var etcUrl = util.format('http://%s:%s/v2/keys/%s', urlInfo.hostname, urlInfo.port, varnishKey);
+  var etcdUrl = util.format('http://%s:%s/v2/keys/%s/%s', urlInfo.hostname, urlInfo.port, varnishKey, varnishConfig.name);
   var data = _.clone(varnishConfig);
   if(!data.ip || !data.port){
     console.error('ip and port can not be null');
     return;
   }
-  request.post(etcUrl)
+  request.put(etcdUrl)
     .send('value=' + JSON.stringify(data))
     .send('ttl=' + varnishKeyTtl)
     .end(function(err, res){
       if(err){
         console.error(err);
       }
-      console.dir(res.body);
+      setTimeout(postVarnishConfig, 600 * 1000);
     });
-  setTimeout(postVarnishConfig, (varnishKeyTtl - 300) * 1000);
 }
 
