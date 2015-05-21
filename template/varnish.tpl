@@ -136,6 +136,7 @@ sub vcl_deliver {
     #
     # You can do accounting or modifying the final object here.
     set resp.http.X-hits = obj.hits;
+    set resp.http.X-Varnish-Name = "<%= name %>";
     return (deliver);
 }
 

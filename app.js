@@ -4,17 +4,30 @@ var fs = require('fs');
 var path = require('path');
 var util = require('util');
 var url = require('url');
-var Etcd = require('node-etcd');
 var crypto = require('crypto');
 var spawn = require('child_process').spawn;
+var request = require('superagent');
 var varnishBackendKey = 'varnish_backend';
+var varnishKey = 'varnish';
 var etcdServer = process.env.ETCD || 'etcd://127.0.0.1:4001';
 var urlInfo = url.parse(etcdServer);
-var etcd = new Etcd(urlInfo.hostname, urlInfo.port);
 var currentVarnishVcl = '';
 var checkInterval = 60 * 1000;
+var varnishKeyTtl = 3600;
+var varnishConfig = {};
+if(process.env.VARNISH){
+  var varnishUrlInfo = url.parse(process.env.VARNISH);
+  varnishConfig.ip = varnishUrlInfo.hostname;
+  varnishConfig.port = varnishUrlInfo.port;
+  if(varnishUrlInfo.pathname){
+    varnishConfig.name = varnishUrlInfo.pathname.substring(1);
+  }
+}
+if(!varnishConfig.name){
+  varnishConfig.name = getRandomName();
+}
 setTimeout(createVcl, checkInterval);
-
+postVarnishConfig();
 
 /**
  * [createVcl 生成vcl文件]
@@ -32,7 +45,8 @@ function createVcl(){
       var vcl = yield getVcl({
         backendConfig : backendConfig,
         initConfig : initConfig,
-        backendSelectConfig : backendSelectConfig
+        backendSelectConfig : backendSelectConfig,
+        name : varnishConfig.name
       });
       if(currentVarnishVcl !== vcl){
         var result = fs.writeFileSync('/etc/varnish/default.vcl', vcl);
@@ -75,6 +89,12 @@ function sortServer(serverList){
 }
 
 
+function getRandomName(){
+  var arr = _.shuffle('abcdefghijklmnopqrstuvwxyz'.split(''));
+  arr.length = 10;
+  return arr.join('');
+}
+
 /**
  * [getBackendConfig 获取backend的配置]
  * @param  {[type]} serversList [description]
@@ -91,7 +111,11 @@ function *getBackendConfig(serversList){
     _.forEach(serverList, function(server, i){
       var obj = _.pick(server, ['name', 'ip', 'port']);
       obj.name += i;
-      arr.push(template(obj));
+      try{
+        arr.push(template(obj));
+      }catch(err){
+        console.error(err);
+      }
     });
   });
   return arr.join('\n');
@@ -224,16 +248,45 @@ function getBackendSelectConfig(serversList){
  */
 function *getServers(){
   var result = yield function(done){
-    etcd.get(varnishBackendKey, done);
+    var etcUrl = util.format('http://%s:%s/v2/keys/%s', urlInfo.hostname, urlInfo.port, varnishBackendKey)
+    request.get(etcUrl).end(done)
   };
-  var nodes = _.get(result, '[0].node.nodes');
+  var nodes = _.get(result, 'body.node.nodes');
   var list = [];
   _.forEach(nodes, function(node){
     list.push(node.value);
   });
-  var backendList = _.map(_.uniq(list), function(v){
-    return JSON.parse(v)
-  })
+  var backendList = [];
+  _.forEach(_.uniq(list), function(v){
+    try{
+      backendList.push(JSON.parse(v));
+    }catch(err){
+      console.error(err);
+    }
+  });
   return backendList;
+}
+
+/**
+ * [postVarnishConfig 将varnish的配置信息发送到etcd中]
+ * @return {[type]} [description]
+ */
+function postVarnishConfig(){
+  var etcUrl = util.format('http://%s:%s/v2/keys/%s', urlInfo.hostname, urlInfo.port, varnishKey);
+  var data = _.clone(varnishConfig);
+  if(!data.ip || !data.port){
+    console.error('ip and port can not be null');
+    return;
+  }
+  request.post(etcUrl)
+    .send('value=' + JSON.stringify(data))
+    .send('ttl=' + varnishKeyTtl)
+    .end(function(err, res){
+      if(err){
+        console.error(err);
+      }
+      console.dir(res.body);
+    });
+  setTimeout(postVarnishConfig, (varnishKeyTtl - 300) * 1000);
 }
 
