@@ -54,7 +54,7 @@ sub vcl_recv {
   }
 
   # 不缓存数据处理
-  if(req.url ~ "^/user" || req.url ~ "\?cache=false" || req.url ~ "&cache=false"){
+  if(req.url ~ "^/user" || req.url ~ "\?cache=false" || req.url ~ "&cache=false" || req.http.Cache-Control == "no-cache"){
     return (pass);
   }
 
@@ -126,18 +126,17 @@ sub vcl_backend_response {
     unset beresp.http.Surrogate-Control;
     set beresp.do_esi = true;
   }
+  beresp.http.X-Varnish-Name = "<%= name %>";
   return (deliver);
 }
 
-
 sub vcl_deliver {
-    # Happens when we have all the pieces we need, and are about to send the
-    # response to the client.
-    #
-    # You can do accounting or modifying the final object here.
-    set resp.http.X-hits = obj.hits;
-    set resp.http.X-Varnish-Name = "<%= name %>";
-    return (deliver);
+  # Happens when we have all the pieces we need, and are about to send the
+  # response to the client.
+  #
+  # You can do accounting or modifying the final object here.
+  set resp.http.X-hits = obj.hits;
+  return (deliver);
 }
 
 
