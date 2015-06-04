@@ -7,7 +7,7 @@ var url = require('url');
 var crypto = require('crypto');
 var spawn = require('child_process').spawn;
 var request = require('superagent');
-var varnishBackendKey = 'varnish_backend';
+var varnishBackendKey = 'backend';
 var varnishKey = 'varnish';
 var ectdKey = '';
 var etcdServer = process.env.ETCD || 'etcd://127.0.0.1:4001';
@@ -260,7 +260,10 @@ function *getServers(){
   var backendList = [];
   _.forEach(_.uniq(list), function(v){
     try{
-      backendList.push(JSON.parse(v));
+      var tmp = JSON.parse(v);
+      if(tmp.category === 'web'){
+        backendList.push(tmp);
+      }
     }catch(err){
       console.error(err);
     }
