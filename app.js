@@ -4,7 +4,7 @@ var fs = require('fs');
 var path = require('path');
 var util = require('util');
 var url = require('url');
-var crypto = require('crypto');
+var crc32 = require('buffer-crc32');
 var spawn = require('child_process').spawn;
 var request = require('superagent');
 var varnishBackendKey = 'backend';
@@ -188,9 +188,9 @@ function getDate(){
 function *getVcl(data){
   var date = new Date();
   var str = '' + date.getFullYear();
-  var md5 = crypto.createHash('md5');
-  md5.update(JSON.stringify(data));
-  var version = getDate() + ' ' + md5.digest('hex');
+  var tmpData = _.clone(data);
+  delete tmpData.name;
+  var version = getDate() + ' ' + crc32.unsigned(JSON.stringify(tmpData));
   data.version = version.toUpperCase();
   var tpl = yield function(done){
     var file = path.join(__dirname, './template/varnish.tpl');

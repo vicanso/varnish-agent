@@ -1,7 +1,7 @@
 {
   "name": "generate-varnish",
   "description": "generate varnish config file",
-  "version": "0.1.10",
+  "version": "0.2.0",
   "author": {
     "name": "vicanso 小墨鱼",
     "email": "vicansocanbico@gmail.com"
@@ -17,6 +17,7 @@
   "main": "app",
   "readmeFilename": "README.md",
   "dependencies": {
+    "buffer-crc32": "^0.2.5",
     "co": "^4.5.4",
     "lodash": "^3.8.0",
     "superagent": "^1.2.0"
