@@ -126,7 +126,7 @@ sub vcl_backend_response {
     unset beresp.http.Surrogate-Control;
     set beresp.do_esi = true;
   }
-  beresp.http.X-Varnish-Name = "<%= name %>";
+  set beresp.http.X-Varnish-Name = "<%= name %>";
   return (deliver);
 }
 
