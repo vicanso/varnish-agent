@@ -12,7 +12,7 @@ var varnishKey = 'varnish';
 var ectdKey = '';
 var etcdServer = process.env.ETCD || 'etcd://127.0.0.1:4001';
 var urlInfo = url.parse(etcdServer);
-var currentVarnishVcl = '';
+var currentVersion = '';
 var checkInterval = 60 * 1000;
 var varnishKeyTtl = 3600;
 var varnishConfig = {};
@@ -43,13 +43,17 @@ function createVcl(){
       var backendConfig = yield getBackendConfig(serversList);
       var initConfig = yield getInitConfig(serversList);
       var backendSelectConfig = getBackendSelectConfig(serversList);
-      var vcl = yield getVcl({
+      var data = {
         backendConfig : backendConfig,
         initConfig : initConfig,
-        backendSelectConfig : backendSelectConfig,
-        name : varnishConfig.name
-      });
-      if(currentVarnishVcl !== vcl){
+        backendSelectConfig : backendSelectConfig
+      };
+      var version = crc32.unsigned(JSON.stringify(data));
+      if(currentVersion !== version){
+        currentVersion = version;
+        data.version = getDate() + ' ' + version;
+        data.name = varnishConfig.name;
+        var vcl = yield getVcl(data);
         var result = fs.writeFileSync('/etc/varnish/default.vcl', vcl);
         if(!result){
           currentVarnishVcl = vcl;
@@ -186,12 +190,6 @@ function getDate(){
  * @return {[type]} [description]
  */
 function *getVcl(data){
-  var date = new Date();
-  var str = '' + date.getFullYear();
-  var tmpData = _.clone(data);
-  delete tmpData.name;
-  var version = getDate() + ' ' + crc32.unsigned(JSON.stringify(tmpData));
-  data.version = version.toUpperCase();
   var tpl = yield function(done){
     var file = path.join(__dirname, './template/varnish.tpl');
     fs.readFile(file, 'utf8', done);
