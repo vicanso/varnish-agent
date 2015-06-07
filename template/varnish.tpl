@@ -20,7 +20,7 @@ acl ADMIN {
 
 
 sub vcl_recv {
-  call health_check;
+  call custom_ctrl;
   call ban;
   call purge;
 
@@ -158,12 +158,30 @@ sub vcl_hash{
 
 
 # 用于检测varnish是否可用
-sub health_check{
+sub custom_ctrl{
   #响应healthy检测
   if(req.url == "/ping"){
-    return(synth(200, "<%= version %>"));
+    return(synth(701));
+  }
+  if(req.url == "/v-servers"){
+    return(synth(702));
   }
 }
+
+
+sub vcl_synth {
+  if(resp.status == 701){
+    set resp.status = 200;
+    set resp.http.Content-Type = "text/plain; charset=utf-8";
+    synthetic("<%= version %>");
+  }else if(resp.status == 702){
+    set resp.status = 200;
+    set resp.http.Content-Type = "text/plain; charset=utf-8";
+    synthetic("<%= serversDesc %>");
+  }
+  return (deliver);
+}
+
 
 # BAN操作
 sub ban{

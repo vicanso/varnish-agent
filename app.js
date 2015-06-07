@@ -53,6 +53,7 @@ function createVcl(){
         currentVersion = version;
         data.version = getDate() + ' ' + version;
         data.name = varnishConfig.name;
+        data.serversDesc = getServersDesc(serversList);
         var vcl = yield getVcl(data);
         var result = fs.writeFileSync('/etc/varnish/default.vcl', vcl);
         if(!result){
@@ -93,6 +94,28 @@ function sortServer(serverList){
   return result;
 }
 
+/**
+ * [getServersDesc description]
+ * @param  {[type]} serversList [description]
+ * @return {[type]}            [description]
+ */
+function getServersDesc(serversList){
+  if(!serversList || !serversList.length){
+    return '';
+  }
+  var keys = ['name', 'ip', 'port', 'host', 'prefix'];
+  var result;
+  _.forEach(serversList, function(serverList){
+    result = _.map(serverList, function(server){
+      var arr = [];
+      _.forEach(keys, function(key){
+        arr.push(server[key] || '');
+      });
+      return arr.join(',');
+    });
+  });
+  return result.join('|');
+}
 
 function getRandomName(){
   var arr = _.shuffle('abcdefghijklmnopqrstuvwxyz'.split(''));
