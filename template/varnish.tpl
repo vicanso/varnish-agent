@@ -157,7 +157,7 @@ sub vcl_hash{
 }
 
 
-# 用于检测varnish是否可用
+# 自定义的一些url的处理
 sub custom_ctrl{
   #响应healthy检测
   if(req.url == "/ping"){
@@ -165,6 +165,9 @@ sub custom_ctrl{
   }
   if(req.url == "/v-servers"){
     return(synth(702));
+  }
+  if(req.url == "/v-vcl"){
+    return(synth(703));
   }
 }
 
@@ -178,7 +181,12 @@ sub vcl_synth {
     set resp.status = 200;
     set resp.http.Content-Type = "text/plain; charset=utf-8";
     synthetic("<%= serversDesc %>");
+  }else if(resp.status == 703){
+    set resp.status = 200;
+    set resp.http.Content-Type = "text/plain; charset=utf-8";
+    synthetic(std.fileread("/etc/varnish/default.vcl"));
   }
+
   return (deliver);
 }
 
