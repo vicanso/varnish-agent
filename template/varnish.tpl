@@ -169,6 +169,9 @@ sub custom_ctrl{
   if(req.url == "/v-vcl"){
     return(synth(703));
   }
+  if(req.url == "/v-stats"){
+    return(synth(704));
+  }
 }
 
 
@@ -185,6 +188,10 @@ sub vcl_synth {
     set resp.status = 200;
     set resp.http.Content-Type = "text/plain; charset=utf-8";
     synthetic(std.fileread("/etc/varnish/default.vcl"));
+  }else if(resp.status == 704){
+    set resp.status = 200;
+    set resp.http.Content-Type = "application/json; charset=utf-8";
+    synthetic(std.fileread("/dev/shm/varnish-stats"));
   }
 
   return (deliver);

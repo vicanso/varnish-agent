@@ -16,6 +16,7 @@ var currentVersion = '';
 var checkInterval = 60 * 1000;
 var varnishKeyTtl = 3600;
 var varnishConfig = {};
+var currentVarnishStats = null;
 if(process.env.VARNISH){
   var varnishUrlInfo = url.parse(process.env.VARNISH);
   varnishConfig.ip = varnishUrlInfo.hostname;
@@ -28,8 +29,8 @@ if(!varnishConfig.name){
   varnishConfig.name = getRandomName();
 }
 setTimeout(createVcl, checkInterval);
+setTimeout(varnishStats, checkInterval);
 postVarnishConfig();
-
 /**
  * [createVcl 生成vcl文件]
  * @return {[type]} [description]
@@ -313,5 +314,64 @@ function postVarnishConfig(){
       }
       setTimeout(postVarnishConfig, 600 * 1000);
     });
+}
+
+/**
+ * [varnishStats 统计varnish的性能，写入文件]
+ * @return {[type]} [description]
+ */
+function varnishStats(){
+  co(function *(){
+    var statsData = yield getVarnishStats();
+    fs.writeFile('/dev/shm/varnish-stats', JSON.stringify(statsData), function(){
+      setTimeout(varnishStats, checkInterval);
+    });
+  }).catch(function(err){
+    console.error(err);
+    setTimeout(varnishStats, checkInterval);
+  });
+}
+
+/**
+ * [*getVarnishStats 获取varnish的统计状态]
+ * @yield {[type]} [description]
+ */
+function *getVarnishStats(){
+  var result = yield function(done){
+    var exec = require('child_process').exec;
+    var proc = exec('varnishstat -j -f MAIN.', {
+      maxBuffer : 2048 * 1024
+    });
+    var list = [];
+    proc.stdout.on('data', function (data) {
+      list.push(data);
+    });
+    proc.on('close', function(){
+      done(null, JSON.parse(list.join('')));
+    });
+  }
+  delete result.timestamp;
+  var interval = 0;
+  var now = Date.now();
+  var statsData = {
+    createdAt : now
+  };
+  if(currentVarnishStats){
+    interval = now - currentVarnishStats.createdAt;
+  }
+  statsData.interval = interval;
+  _.forEach(result, function(v, k){
+    k = k.replace('MAIN.', '');
+    var value = v.value;
+    var tmp = {
+      v : value
+    };
+    if(interval){
+      tmp.c =  value - currentVarnishStats[k].v;
+    }
+    statsData[k] = tmp;
+  });
+  currentVarnishStats = statsData;
+  return currentVarnishStats;
 }
 
