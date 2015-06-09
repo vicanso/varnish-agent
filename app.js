@@ -11,7 +11,7 @@ var debug = require('debug')('jt.varnish');
 var varnishKey = 'varnish';
 var urlInfo = url.parse(process.env.ETCD || 'etcd://127.0.0.1:4001');
 var currentVersion = '';
-var checkInterval = 10 * 1000;
+var checkInterval = 60 * 1000;
 var varnishConfig = {};
 var currentVarnishStats = null;
 
