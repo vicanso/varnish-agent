@@ -3,6 +3,21 @@ import std;
 import directors;
 
 
+backend jtvarnish{
+  .host = "127.0.0.1";
+  .port = "10000";
+  .connect_timeout = 3s;
+  .first_byte_timeout = 10s;
+  .between_bytes_timeout = 2s;
+  .probe = {
+    .url = "/ping";
+    .interval = 3s;
+    .timeout = 5s;
+    .window = 5;
+    .threshold = 3;
+  }
+}
+
 # backend start
 <%= backendConfig %>
 # backend end
@@ -166,16 +181,15 @@ sub custom_ctrl{
   if(req.url == "/v-servers"){
     return(synth(702));
   }
-  if(req.url == "/v-vcl"){
-    return(synth(703));
-  }
-  if(req.url == "/v-stats"){
-    return(synth(704));
+  if(req.url == "/v-vcl" || req.url == "/v-stats"){
+    set req.backend_hint = jtvarnish;
+    return(pass);
   }
 }
 
 
 sub vcl_synth {
+  set resp.http.Cache-Control = "must-revalidate, max-age=0";
   if(resp.status == 701){
     set resp.status = 200;
     set resp.http.Content-Type = "text/plain; charset=utf-8";
@@ -184,14 +198,6 @@ sub vcl_synth {
     set resp.status = 200;
     set resp.http.Content-Type = "text/plain; charset=utf-8";
     synthetic("<%= serversDesc %>");
-  }else if(resp.status == 703){
-    set resp.status = 200;
-    set resp.http.Content-Type = "text/plain; charset=utf-8";
-    synthetic(std.fileread("/etc/varnish/default.vcl"));
-  }else if(resp.status == 704){
-    set resp.status = 200;
-    set resp.http.Content-Type = "application/json; charset=utf-8";
-    synthetic(std.fileread("/dev/shm/varnish-stats"));
   }
 
   return (deliver);
