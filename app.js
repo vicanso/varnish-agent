@@ -13,7 +13,6 @@ var urlInfo = url.parse(process.env.ETCD || 'etcd://127.0.0.1:4001');
 var currentVersion = '';
 var checkInterval = 60 * 1000;
 var varnishConfig = {};
-var currentVarnishStats = null;
 
 var varnish = require('./lib/varnish');
 
@@ -29,10 +28,8 @@ if(!varnishConfig.name){
   varnishConfig.name = getRandomName();
 }
 setTimeout(createVcl, checkInterval);
-setTimeout(varnishStats, checkInterval);
 postVarnishConfig();
 initServer();
-
 /**
  * [createVcl 生成vcl文件]
  * @return {[type]} [description]
@@ -133,22 +130,6 @@ function postVarnishConfig(){
     });
 }
 
-/**
- * [varnishStats 统计varnish的性能，写入文件]
- * @return {[type]} [description]
- */
-function varnishStats(){
-  co(function *(){
-    var stats = require('./lib/stats');
-    var statsData = yield stats.get();
-    currentVarnishStats = statsData;
-    debug('varnish stats:%j', statsData);
-    setTimeout(varnishStats, checkInterval);
-  }).catch(function(err){
-    console.error(err);
-    setTimeout(varnishStats, checkInterval);
-  });
-}
 
 /**
  * [initServer 初始化http server]
@@ -169,12 +150,18 @@ function initServer(){
         res.end(vcl);
       });
     }else if(req.url === '/v-stats'){
-      var data = currentVarnishStats || {};
-      res.writeHead(200, {
-        'Content-Type' : 'application/json; charset=utf-8',
-        'Cache-Control' : 'must-revalidate, max-age=0'
+      co(function *(){
+        var stats = require('./lib/stats');
+        var data = yield stats.get();
+        res.writeHead(200, {
+          'Content-Type' : 'application/json; charset=utf-8',
+          'Cache-Control' : 'public, max-age=5'
+        });
+        res.end(JSON.stringify(data));
+      }).catch(function(err){
+        res.writeHead(500);
+        res.end(err.message);
       });
-      res.end(JSON.stringify(data));
     }else{
       res.writeHead(200, {'Content-Type': 'text/plain'});
       res.end('OK');
