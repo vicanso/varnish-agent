@@ -145,7 +145,7 @@ function initServer(){
         }
         res.writeHead(200, {
           'Content-Type' : 'text/plain; charset=utf-8',
-          'Cache-Control' : 'must-revalidate, max-age=0'
+          'Cache-Control' : 'public, max-age=5'
         });
         res.end(vcl);
       });

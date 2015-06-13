@@ -183,7 +183,7 @@ sub custom_ctrl{
   }
   if(req.url == "/v-vcl" || req.url == "/v-stats"){
     set req.backend_hint = jtvarnish;
-    return(pass);
+    return(hash);
   }
 }
 
