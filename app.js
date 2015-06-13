@@ -27,7 +27,7 @@ if(process.env.VARNISH){
 if(!varnishConfig.name){
   varnishConfig.name = getRandomName();
 }
-setTimeout(createVcl, checkInterval);
+setTimeout(createVcl, 1000);
 postVarnishConfig();
 initServer();
 /**
