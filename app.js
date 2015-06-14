@@ -145,7 +145,7 @@ function initServer(){
         }
         res.writeHead(200, {
           'Content-Type' : 'text/plain; charset=utf-8',
-          'Cache-Control' : 'public, max-age=5'
+          'Cache-Control' : 'must-revalidate, max-age=0'
         });
         res.end(vcl);
       });
@@ -155,7 +155,7 @@ function initServer(){
         var data = yield stats.get();
         res.writeHead(200, {
           'Content-Type' : 'application/json; charset=utf-8',
-          'Cache-Control' : 'public, max-age=5'
+          'Cache-Control' : 'must-revalidate, max-age=0'
         });
         res.end(JSON.stringify(data));
       }).catch(function(err){
