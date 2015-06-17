@@ -42,9 +42,14 @@ sub vcl_recv {
   # 设置x-forwarded-for
   if(req.restarts == 0){
     if(req.http.x-forwarded-for){
-      set req.http.X-Forwarded-For = req.http.X-Forwarded-For + ", " + client.ip;
+      set req.http.x-forwarded-for = req.http.x-forwarded-for + ", " + client.ip;
     }else{
-      set req.http.X-Forwarded-For = client.ip;
+      set req.http.x-forwarded-for = client.ip;
+    }
+    if(req.http.x-process){
+      set req.http.x-process = req.http.x-process + ", <%= hostname %>";
+    }else{
+      set req.http.x-process = "<%= hostname %>";
     }
   }
 

@@ -45,6 +45,7 @@ function createVcl(){
         currentVersion = version;
         config.version = getDate() + ' ' + version;
         config.name = varnishConfig.name;
+        config.hostname = process.env.HOSTNAME || 'unknown';
         config.serversDesc = varnish.getServersDesc(serversList);
         var vcl = yield varnish.getVcl(config);
         debug('varnish vcl:%s', vcl);
