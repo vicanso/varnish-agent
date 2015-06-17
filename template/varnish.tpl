@@ -47,9 +47,9 @@ sub vcl_recv {
       set req.http.x-forwarded-for = client.ip;
     }
     if(req.http.x-process){
-      set req.http.x-process = req.http.x-process + ", <%= hostname %>";
+      set req.http.x-process = req.http.x-process + ", VN-<%= hostname %>";
     }else{
-      set req.http.x-process = "<%= hostname %>";
+      set req.http.x-process = "VN-<%= hostname %>";
     }
   }
 
