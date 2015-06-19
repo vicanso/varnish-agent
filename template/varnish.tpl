@@ -47,9 +47,9 @@ sub vcl_recv {
       set req.http.x-forwarded-for = client.ip;
     }
     if(req.http.x-process){
-      set req.http.x-process = req.http.x-process + ", VN-<%= hostname %>";
+      set req.http.x-process = req.http.x-process + ", <%= name %>";
     }else{
-      set req.http.x-process = "VN-<%= hostname %>";
+      set req.http.x-process = "<%= name %>";
     }
   }
 
@@ -113,9 +113,9 @@ sub vcl_hit{
   if(obj.ttl > 0s){
     return (deliver);
   }
-  # 如果backend可用时，在数据过期30s之内使用当前缓存返回
+  # 如果backend可用时，在数据过期3s之内使用当前缓存返回
   if(std.healthy(req.backend_hint)){
-    if(obj.ttl + 30s > 0s){
+    if(obj.ttl + 3s > 0s){
       return (deliver);
     }
   }else if(obj.ttl + obj.grace > 0s){
@@ -146,7 +146,6 @@ sub vcl_backend_response {
     unset beresp.http.Surrogate-Control;
     set beresp.do_esi = true;
   }
-  set beresp.http.X-Varnish-Name = "<%= name %>";
   return (deliver);
 }
 

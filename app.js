@@ -7,74 +7,64 @@ var crc32 = require('buffer-crc32');
 var spawn = require('child_process').spawn;
 var request = require('superagent');
 var debug = require('debug')('jt.varnish');
-
-var varnishKey = 'varnish';
-var urlInfo = url.parse(process.env.ETCD || 'etcd://127.0.0.1:4001');
-var currentVersion = '';
-var checkInterval = 60 * 1000;
-var varnishConfig = {};
-
 var varnish = require('./lib/varnish');
 
-if(process.env.VARNISH){
-  var varnishUrlInfo = url.parse(process.env.VARNISH);
-  varnishConfig.ip = varnishUrlInfo.hostname;
-  varnishConfig.port = varnishUrlInfo.port;
-  if(varnishUrlInfo.pathname){
-    varnishConfig.name = varnishUrlInfo.pathname.substring(1);
-  }
+if(!validateEnv()){
+  return;
 }
-if(!varnishConfig.name){
-  varnishConfig.name = getRandomName();
-}
-setTimeout(createVcl, 1000);
+setTimeout(function(){
+  createVcl();
+}, 1000);
 postVarnishConfig();
 initServer();
+
 /**
  * [createVcl 生成vcl文件]
  * @return {[type]} [description]
  */
-function createVcl(){
+function createVcl(currentVersion){
+  var timer;
+  var finished = function(){
+    if(timer){
+      clearTimeout(timer);
+    }
+    timer = setTimeout(function(){
+      timer = 0;
+      createVcl(currentVersion);
+    }, 60 * 1000);
+  };
   co(function *(){
+    var urlInfo = getEtcd();
     var serversList = yield varnish.getServers(urlInfo);
     var config = yield varnish.getConfig(serversList);
     debug('varnish config:%j', config);
     if(config){
       var version = crc32.unsigned(JSON.stringify(config));
       if(currentVersion !== version){
-        currentVersion = version;
         config.version = getDate() + ' ' + version;
-        config.name = varnishConfig.name;
-        config.hostname = process.env.HOSTNAME || 'unknown';
+        config.name = process.env.NAME;
         config.serversDesc = varnish.getServersDesc(serversList);
         var vcl = yield varnish.getVcl(config);
         debug('varnish vcl:%s', vcl);
         var result = fs.writeFileSync('/etc/varnish/default.vcl', vcl);
         if(!result){
-          currentVarnishVcl = vcl;
           var cmd = spawn('service', ['varnish', 'reload']);
           cmd.on('error', function(err){
             console.error(err);
           });
+          cmd.on('close', function(code){
+            if(code === 0){
+              currentVersion = version;
+            }
+          });
         }
       }
     }
-    setTimeout(createVcl, checkInterval);
+    finished();
   }).catch(function(err){
     console.error(err);
-    setTimeout(createVcl, checkInterval);
+    finished();
   });
-}
-
-
-/**
- * [getRandomName 随机生成名字]
- * @return {[type]} [description]
- */
-function getRandomName(){
-  var arr = _.shuffle('abcdefghijklmnopqrstuvwxyz'.split(''));
-  arr.length = 10;
-  return arr.join('');
 }
 
 
@@ -113,8 +103,16 @@ function getDate(){
  * @return {[type]} [description]
  */
 function postVarnishConfig(){
-  var etcdUrl = util.format('http://%s:%s/v2/keys/%s/%s', urlInfo.hostname, urlInfo.port, varnishKey, varnishConfig.name);
-  var data = _.clone(varnishConfig);
+  var name = process.env.NAME;
+  var key = process.env.VARNISH_KEY;
+  var urlInfo = getEtcd();
+  var etcdUrl = util.format('http://%s:%s/v2/keys/%s/%s', urlInfo.hostname, urlInfo.port, key, name);
+  var varnishUrlInfo = url.parse(process.env.VARNISH);
+  var data = {
+    ip : varnishUrlInfo.hostname,
+    port : varnishUrlInfo.port,
+    name : name
+  };
   if(!data.ip || !data.port){
     console.error('ip and port can not be null');
     return;
@@ -170,4 +168,27 @@ function initServer(){
   }).listen(10000);
 }
 
+/**
+ * [validateEnv 校验env的合法性]
+ * @return {[type]} [description]
+ */
+function validateEnv(){
+  var env = process.env;
+  var keys = 'ETCD VARNISH NAME VARNISH_KEY BACKEND_KEY'.split(' ');
+  var fail = false;
+  _.forEach(keys, function(key){
+    if(!env[key]){
+      fail = true;
+    }
+  });
+  if(fail){
+    console.error('参数：' + keys.join(',') + '均不能为空！');
+    return false;
+  }
+  return true;
+}
 
+
+function getEtcd(){
+  return url.parse(process.env.ETCD);
+}
