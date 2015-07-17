@@ -1,0 +1,31 @@
+{
+  "name": "varnish-agent",
+  "description": "get backend config from etcd and the generate varnish config file",
+  "version": "0.0.1",
+  "author": {
+    "name": "vicanso 小墨鱼",
+    "email": "vicansocanbico@gmail.com"
+  },
+  "keywords": [
+    "express,base"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vicanso/varnish-agent.git"
+  },
+  "main": "app",
+  "readmeFilename": "README.md",
+  "dependencies": {
+    "buffer-crc32": "^0.2.5",
+    "co": "^4.6.0",
+    "debug": "^2.2.0",
+    "lodash": "^3.10.0",
+    "superagent": "^1.2.0",
+    "url-join": "0.0.1"
+  },
+  "devDependencies": {
+    "gulp": "^3.9.0",
+    "gulp-jshint": "^1.11.2"
+  }
+}
