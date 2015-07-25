@@ -8,6 +8,7 @@ const fs = require('fs');
 const spawn = require('child_process').spawn;
 etcd.url = process.env.ETCD || 'http://localhost:4001';
 const etcdKey = process.env.BACKEND_KEY || 'varnish-backends';
+const secretPwd = process.env.PWD;
 const debug = require('debug')('jt:varnish');
 createVcl();
 initServer();
@@ -99,7 +100,19 @@ function getDate(){
  */
 function initServer(){
   const http = require('http');
+  const url = require('url');
+  const querystring = require('querystring');
   http.createServer(function(req, res){
+    let urlInfo = url.parse(req.url);
+    let pwd;
+    if (urlInfo.query) {
+      pwd = querystring.parse(urlInfo.query).pwd;
+    }
+    if (secretPwd && pwd !== secretPwd) {
+      res.writeHead(403);
+      res.end('password is wrong');
+      return;
+    }
     if(req.url === '/v-vcl'){
       fs.readFile('/etc/varnish/default.vcl', 'utf8', function(err, vcl){
         if(err){
@@ -125,7 +138,7 @@ function initServer(){
         res.end(err.message);
       });
     }else{
-      res.writeHead(200, {'Content-Type': 'text/plain'});
+      res.writeHead(200, {'Content-Type': 'text/plain', 'Cache-Control': 'must-revalidate, max-age=0'});
       res.end('OK');
     }
   }).listen(10000);
