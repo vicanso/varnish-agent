@@ -10,8 +10,8 @@ etcd.url = process.env.ETCD || 'http://localhost:4001';
 const etcdKey = process.env.BACKEND_KEY || 'varnish-backends';
 const secretPwd = process.env.PWD;
 const debug = require('debug')('jt:varnish');
-createVcl();
 initServer();
+setTimeout(createVcl, 5000);
 /**
  * [createVcl 生成vcl文件]
  * @param  {[type]} currentVersion [description]
@@ -35,22 +35,17 @@ function createVcl(currentVersion) {
     if (config) {
       let version = crc32.unsigned(JSON.stringify(config));
       if (currentVersion !== version) {
-        config.version = getDate() + ' ' + version;
+        let date = getDate();
+        config.version = date + ' ' + version;
         config.name = process.env.NAME;
         config.serversDesc = varnish.getServersDesc(serversList);
         let vcl = yield varnish.getVcl(config);
         debug('varnish vcl:%s', vcl);
-        let result = fs.writeFileSync('/etc/varnish/default.vcl', vcl);
+        let file = '/tmp/' + date + '.vcl';
+        let result = fs.writeFileSync(file, vcl);
         if (!result) {
-          let cmd = spawn('service', ['varnish', 'reload']);
-          cmd.on('error', function (err) {
-            console.error(err);
-          });
-          cmd.on('close', function (code) {
-            if (code === 0) {
-              currentVersion = version;
-            }
-          });
+          yield changeVcl(date, file);
+          currentVersion = version;
         }
       }
     }
@@ -62,30 +57,86 @@ function createVcl(currentVersion) {
 }
 
 
+/**
+ * [changeVcl description]
+ * @param  {[type]} tag  [description]
+ * @param  {[type]} file [description]
+ * @return {[type]}      [description]
+ */
+function *changeVcl(tag, file) {
+
+  function loadVcl(tag, file) {
+    return new Promise(function(resolve, reject) {
+      let cmd = spawn('varnishadm', ['vcl.load', tag, file]);
+      cmd.on('error', function (err) {
+        console.error(err);
+      });
+      cmd.on('close', function (code) {
+        if (code === 0) {
+          resolve();
+        } else {
+          reject(code);
+        }
+      });
+      cmd.stdout.on('data', function (msg) {
+        console.log(msg.toString());
+      });
+      cmd.stderr.on('data', function (msg) {
+        console.error(msg.toString());
+      });
+    });
+  }
+
+  function useVcl(tag) {
+    return new Promise(function(resolve, reject) {
+      let cmd = spawn('varnishadm', ['vcl.use', tag]);
+      cmd.on('error', function (err) {
+        console.error(err);
+      });
+      cmd.on('close', function (code) {
+        if (code === 0) {
+          resolve();
+        } else {
+          reject(code);
+        }
+      });
+      cmd.stdout.on('data', function (msg) {
+        console.log(msg.toString());
+      });
+      cmd.stderr.on('data', function (msg) {
+        console.error(msg.toString());
+      });
+    });
+  }
+
+  yield loadVcl(tag, file);
+  yield useVcl(tag);
+}
+
 
 /**
  * [getDate 获取日期字符串，用于生成版本号]
  * @return {[type]} [description]
  */
 function getDate(){
-  var date = new Date();
-  var month = date.getMonth() + 1;
+  let date = new Date();
+  let month = date.getMonth() + 1;
   if(month < 10){
     month = '0' + month;
   }
-  var day = date.getDate();
+  let day = date.getDate();
   if(day < 10){
     day = '0' + day;
   }
-  var hours = date.getHours();
+  let hours = date.getHours();
   if(hours < 10){
     hours = '0' + hours;
   }
-  var minutes = date.getMinutes();
+  let minutes = date.getMinutes();
   if(minutes < 10){
     minutes = '0' + minutes;
   }
-  var seconds = date.getSeconds();
+  let seconds = date.getSeconds();
   if(seconds < 10){
     seconds = '0' + seconds;
   }
