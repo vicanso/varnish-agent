@@ -8,8 +8,9 @@ const fs = require('fs');
 const spawn = require('child_process').spawn;
 etcd.url = process.env.ETCD || 'http://localhost:4001';
 const etcdKey = process.env.BACKEND_KEY || 'varnish-backends';
-const secretPwd = process.env.PWD;
+const secretPwd = process.env.PASSWORD;
 const debug = require('debug')('jt:varnish');
+let currentVclFile;
 initServer();
 setTimeout(createVcl, 5000);
 /**
@@ -45,6 +46,7 @@ function createVcl(currentVersion) {
         let result = fs.writeFileSync(file, vcl);
         if (!result) {
           yield changeVcl(date, file);
+          currentVclFile = file;
           currentVersion = version;
         }
       }
@@ -64,7 +66,12 @@ function createVcl(currentVersion) {
  * @return {[type]}      [description]
  */
 function *changeVcl(tag, file) {
-
+  /**
+   * [loadVcl 加载vcl]
+   * @param  {[type]} tag  [description]
+   * @param  {[type]} file [description]
+   * @return {[type]}      [description]
+   */
   function loadVcl(tag, file) {
     return new Promise(function(resolve, reject) {
       let cmd = spawn('varnishadm', ['vcl.load', tag, file]);
@@ -87,6 +94,11 @@ function *changeVcl(tag, file) {
     });
   }
 
+  /**
+   * [useVcl 激活vcl]
+   * @param  {[type]} tag [description]
+   * @return {[type]}     [description]
+   */
   function useVcl(tag) {
     return new Promise(function(resolve, reject) {
       let cmd = spawn('varnishadm', ['vcl.use', tag]);
@@ -165,7 +177,7 @@ function initServer(){
       return;
     }
     if(req.url === '/v-vcl'){
-      fs.readFile('/etc/varnish/default.vcl', 'utf8', function(err, vcl){
+      fs.readFile(currentVclFile, 'utf8', function(err, vcl){
         if(err){
           vcl = 'can not get vcl';
         }
