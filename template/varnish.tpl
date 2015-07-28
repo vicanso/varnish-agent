@@ -56,8 +56,7 @@ sub vcl_recv {
   # Normalize the header, remove the port (in case you're testing this on various TCP ports)
   set req.http.Host = regsub(req.http.Host, ":[0-9]+", "");
 
-  # Normalize the query arguments
-  set req.url = std.querysort(req.url);
+
 
   # 不同的HOST或url前缀选择不同的backend
 <%= backendSelectConfig %>
@@ -70,13 +69,16 @@ sub vcl_recv {
     req.method != "TRACE" &&
     req.method != "OPTIONS" &&
     req.method != "DELETE"){
-    return (pipe);  
+    return (pipe);
   }
 
   # 不缓存数据处理
   if(req.url ~ "^/user" || req.url ~ "\?cache=false" || req.url ~ "&cache=false" || req.http.Cache-Control == "no-cache"){
     return (pass);
   }
+
+  # Normalize the query arguments
+  set req.url = std.querysort(req.url);
 
   # Implementing websocket support (https://www.varnish-cache.org/docs/4.0/users-guide/vcl-example-websockets.html)
   if (req.http.Upgrade ~ "(?i)websocket") {
@@ -96,7 +98,7 @@ sub vcl_recv {
   set req.http.Surrogate-Capability = "key=ESI/1.0";
 
   # 如果能保证到所有其它的请求都是可缓存，无用户无关的，可以使用unset cookie
-  # unset req.http.Cookie; 
+  # unset req.http.Cookie;
   return (hash);
 }
 
@@ -140,7 +142,7 @@ sub vcl_backend_response {
     set beresp.ttl = 120s;
     return (deliver);
   }
-  
+
   # Pause ESI request and remove Surrogate-Control header
   if (beresp.http.Surrogate-Control ~ "ESI/1.0") {
     unset beresp.http.Surrogate-Control;
