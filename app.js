@@ -37,7 +37,7 @@ function createVcl(currentVersion) {
       let version = crc32.unsigned(JSON.stringify(config));
       if (currentVersion !== version) {
         let date = getDate();
-        config.version = date + ' ' + version;
+        config.version = date + ' ' + version + ' ' + etcdKey;
         config.name = process.env.NAME;
         config.serversDesc = varnish.getServersDesc(serversList);
         let vcl = yield varnish.getVcl(config);
