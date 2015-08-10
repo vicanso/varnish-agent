@@ -1,0 +1,16 @@
+[
+  {
+    "name" : "supervisor",
+    "ip" : "192.168.2.2",
+    "port" : 8010,
+    "prefix" : "/supervisor",
+    "weight" : 1
+  },
+  {
+    "name" : "supervisor",
+    "ip" : "192.168.2.2",
+    "port" : 8011,
+    "prefix" : "/supervisor",
+    "weight" : 2
+  }
+]

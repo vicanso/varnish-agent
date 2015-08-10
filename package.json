@@ -1,7 +1,7 @@
 {
   "name": "varnish-agent",
   "description": "get backend config from etcd and the generate varnish config file",
-  "version": "0.0.8",
+  "version": "0.1.0",
   "author": {
     "name": "vicanso 小墨鱼",
     "email": "vicansocanbico@gmail.com"
@@ -19,8 +19,9 @@
   "dependencies": {
     "buffer-crc32": "^0.2.5",
     "co": "^4.6.0",
+    "commander": "^2.8.1",
     "debug": "^2.2.0",
-    "lodash": "^3.10.0",
+    "lodash": "^3.10.1",
     "superagent": "^1.2.0",
     "url-join": "0.0.1"
   },

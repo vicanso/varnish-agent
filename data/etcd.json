@@ -1,0 +1,6 @@
+{
+  "type" : "etcd",
+  "url" : "http://192.168.2.2:4001",
+  "key" : "varnish-backends",
+  "name" : "varnish-test"
+}
