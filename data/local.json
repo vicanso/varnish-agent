@@ -1,5 +1,4 @@
 {
   "type" : "local",
-  "name" : "varnish-test",
   "file" : "./backends.json"
 }

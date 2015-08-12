@@ -1,5 +1,4 @@
 {
   "type" : "http",
-  "url" : "http://7xkn3i.com1.z0.glb.clouddn.com/backends.json",
-  "name" : "varnish-test"
+  "url" : "http://7xkn3i.com1.z0.glb.clouddn.com/backends.json"
 }
