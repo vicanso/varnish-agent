@@ -4,9 +4,11 @@ const fs = require('fs');
 const _ = require('lodash');
 const debug = require('debug')('jt:varnish');
 const path = require('path');
-var setting = null;
+var setting = {
+  consul : process.env.CONSUL || 'http://localhost:8500',
+  serviceTag : process.env.SERVICE_TAG || 'http-backend'
+};
 var vclFileList = [];
-createSetting();
 
 exports.get = get;
 exports.addVclFile = addVclFile;
@@ -37,25 +39,4 @@ function addVclFile(file) {
  */
 function getLatestVclFile() {
   return _.last(vclFileList);
-}
-
-/**
- * [createSetting description]
- * @return {[type]} [description]
- */
-function createSetting() {
-  const program = require('commander');
-  program
-    .version(pkg.version)
-    .option('-c, --config <n>', 'config file path')
-    .parse(process.argv);
-
-  program.config = program.config || './default.json';
-  let file = path.join(__dirname, program.config);
-  let buf = fs.readFileSync(file);
-  setting = JSON.parse(buf);
-  if (setting.type === 'local' && setting.file.charAt(0) !== '/') {
-    setting.file = path.join(path.dirname(file), setting.file);
-  }
-  debug('setting:%j', setting);
 }

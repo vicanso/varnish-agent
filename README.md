@@ -1,63 +1,20 @@
 # varnish-agent
 
-指定varnish的backend列表，程序自动生成相应的vcl配置文件，并将其设置为使用状态。
+通过从consul中获取tag标识为http-backend(通过env来配置)的http服务，生成varnish配置，启动varnish。
 
 ## 使用方式
 
-通过指定获取backend列表的方式，程序定时(60秒间隔)获取，判断当前backend列表与之前的是否有更新；如果有更新，生成新的vcl(/tmp/2015-08-10T05:44:50.727Z.vcl)，加载并使用。
+通过指定consul中serive tag，程序定时(60秒间隔)获取，判断当前backend列表与之前的是否有更新；如果有更新，生成新的vcl(/tmp/2015-08-10T05:44:50.727Z.vcl)，加载并使用。
 
 ```js
-// 指定配置文件，http.json中配置数据获取方式，若不指定配置文件，则默认为 ./default.json
-node app -c ./data/http.json
-// 若使用pm2来启动，请修改pm2.json的args
+// CONSUL默认为http://localhost:8500
+
+// SERVICE_TAG默认为http-backend
+// SERVICE_TAG也可以配置为多个 SERVICE_TAG=test-backend,http-backend
+SERVICE_TAG=test-backend CONSUL=http://localhost:8500  node app
+// 若使用pm2来启动，可以修改pm2.json的args
 ```
 
-
-## 配置文件获取方式
-
-- 通过etcd获取配置文件
-
-- 通过http请求返回json文件
-
-- 通过读取本地文件获取
-
-
-ETCD保存的backend列表数据
-
-```json
-{
-  "action":"get",
-  "node":{
-    "key":"/varnish-backends",
-    "dir":true,
-    "nodes":[
-      {
-        "key":"/varnish-backends/22",
-        "value":"{\"name\":\"ytjui\",\"prefix\":\"/portal\",\"ip\":\"10.2.110.211\",\"port\":8092}",
-        "modifiedIndex":22,
-        "createdIndex":22
-      }
-    ],
-    "modifiedIndex":22,
-    "createdIndex":22
-  }
-}
-```
-
-
-HTTP JSON保存的列表数据（本地文件保存的数据格式和HTTP JSON的一样）
-
-```json
-[
-  {
-    "name" : "supervisor",
-    "ip" : "192.168.2.2",
-    "port" : 8010,
-    "prefix" : "/supervisor",
-    "weight" : 1
-  }
-]
-```
 
 
 ## API

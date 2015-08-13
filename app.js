@@ -2,8 +2,8 @@
 const setting = require('./setting');
 const co = require('co');
 const crc32 = require('buffer-crc32');
-const etcd = require('./lib/etcd');
 const varnish = require('./lib/varnish');
+const consul = require('./lib/consul');
 const stats = require('./lib/stats');
 const fs = require('fs');
 const spawn = require('child_process').spawn;
@@ -47,6 +47,7 @@ function createVcl(currentVersion) {
           yield changeVcl(date, file);
           setting.addVclFile(file);
           currentVersion = version;
+          yield consul.register();
         }
       }
     }

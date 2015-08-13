@@ -7,7 +7,7 @@ backend jtvarnish{
   .host = "127.0.0.1";
   .port = "10000";
   .connect_timeout = 3s;
-  .first_byte_timeout = 10s;
+  .first_byte_timeout = 3s;
   .between_bytes_timeout = 2s;
   .probe = {
     .url = "/ping";
