@@ -6,7 +6,8 @@ const debug = require('debug')('jt:varnish');
 const path = require('path');
 var setting = {
   consul : process.env.CONSUL || 'http://localhost:8500',
-  serviceTag : process.env.SERVICE_TAG || 'http-backend'
+  backendTag : process.env.BACKEND_TAG || 'http-backend',
+  serviceTag : process.env.SERVICE_TAG || 'varnish'
 };
 var vclFileList = [];
 

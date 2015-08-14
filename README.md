@@ -9,9 +9,13 @@
 ```js
 // CONSUL默认为http://localhost:8500
 
-// SERVICE_TAG默认为http-backend
-// SERVICE_TAG也可以配置为多个 SERVICE_TAG=test-backend,http-backend
-SERVICE_TAG=test-backend CONSUL=http://localhost:8500  node app
+// SERVICE_TAG默认用varnish，用于标记在consul中注册服务的tag
+
+// BACKEND_TAG默认为http-backend
+// BACKEND_TAG也可以配置为多个 BACKEND_TAG=test-backend,http-backend
+
+
+BACKEND_TAG=test-backend CONSUL=http://localhost:8500  node app
 // 若使用pm2来启动，可以修改pm2.json的args
 ```
 

@@ -9,6 +9,7 @@ const fs = require('fs');
 const spawn = require('child_process').spawn;
 const server = require('./lib/server');
 const debug = require('debug')('jt:varnish');
+var registered = false;
 setTimeout(createVcl, 5000);
 server.start();
 
@@ -47,7 +48,11 @@ function createVcl(currentVersion) {
           yield changeVcl(date, file);
           setting.addVclFile(file);
           currentVersion = version;
-          yield consul.register();
+          if (!registered) {
+            yield consul.register();
+            registered = true;
+          }
+
         }
       }
     }
