@@ -10,4 +10,4 @@ EXPOSE 80
 
 RUN cd /varnish-agent && npm install --production  --registry=https://registry.npm.taobao.org
 
-CMD cd /varnish-agent && node app & && varnishd -f /etc/varnish/default.vcl -s malloc,256m -a 0.0.0.0:80 -F
+CMD cd /varnish-agent && node app

@@ -12,6 +12,7 @@ const debug = require('debug')('jt:varnish');
 var registered = false;
 setTimeout(createVcl, 5000);
 server.start();
+varnishd();
 
 
 /**
@@ -62,6 +63,24 @@ function createVcl(currentVersion) {
   }).catch(function(err) {
     console.error(err);
     finished();
+  });
+}
+
+function varnishd() {
+  let args = '-f /etc/varnish/default.vcl -s malloc,256m -a 0.0.0.0:80 -F'.split(
+    ' ');
+  let cmd = spawn('varnishd', args);
+  cmd.on('error', function(err) {
+    console.error(err);
+  });
+  cmd.on('close', function(code) {
+    process.exit(code)
+  });
+  cmd.stdout.on('data', function(msg) {
+    console.log(msg.toString());
+  });
+  cmd.stderr.on('data', function(msg) {
+    console.error(msg.toString());
   });
 }
 
