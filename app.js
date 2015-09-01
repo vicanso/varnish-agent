@@ -13,6 +13,7 @@ var registered = false;
 setTimeout(createVcl, 5000);
 server.start();
 
+
 /**
  * [createVcl 生成vcl文件]
  * @param  {[type]} currentVersion [description]
@@ -20,16 +21,17 @@ server.start();
  */
 function createVcl(currentVersion) {
   let timer;
+
   function finished() {
     if (timer) {
       clearTimeout(timer);
     }
-    timer = setTimeout(function () {
+    timer = setTimeout(function() {
       timer = 0;
       createVcl(currentVersion);
     }, 60 * 1000);
   }
-  co(function *() {
+  co(function*() {
     let serversList = yield varnish.getBackends();
     let config = yield varnish.getConfig(serversList);
     debug('varnish config:%j', config);
@@ -57,7 +59,7 @@ function createVcl(currentVersion) {
       }
     }
     finished();
-  }).catch(function (err) {
+  }).catch(function(err) {
     console.error(err);
     finished();
   });
@@ -70,7 +72,7 @@ function createVcl(currentVersion) {
  * @param  {[type]} file [description]
  * @return {[type]}      [description]
  */
-function *changeVcl(tag, file) {
+function* changeVcl(tag, file) {
   /**
    * [loadVcl 加载vcl]
    * @param  {[type]} tag  [description]
@@ -80,20 +82,20 @@ function *changeVcl(tag, file) {
   function loadVcl(tag, file) {
     return new Promise(function(resolve, reject) {
       let cmd = spawn('varnishadm', ['vcl.load', tag, file]);
-      cmd.on('error', function (err) {
+      cmd.on('error', function(err) {
         console.error(err);
       });
-      cmd.on('close', function (code) {
+      cmd.on('close', function(code) {
         if (code === 0) {
           resolve();
         } else {
           reject(code);
         }
       });
-      cmd.stdout.on('data', function (msg) {
+      cmd.stdout.on('data', function(msg) {
         console.log(msg.toString());
       });
-      cmd.stderr.on('data', function (msg) {
+      cmd.stderr.on('data', function(msg) {
         console.error(msg.toString());
       });
     });
@@ -107,20 +109,20 @@ function *changeVcl(tag, file) {
   function useVcl(tag) {
     return new Promise(function(resolve, reject) {
       let cmd = spawn('varnishadm', ['vcl.use', tag]);
-      cmd.on('error', function (err) {
+      cmd.on('error', function(err) {
         console.error(err);
       });
-      cmd.on('close', function (code) {
+      cmd.on('close', function(code) {
         if (code === 0) {
           resolve();
         } else {
           reject(code);
         }
       });
-      cmd.stdout.on('data', function (msg) {
+      cmd.stdout.on('data', function(msg) {
         console.log(msg.toString());
       });
-      cmd.stderr.on('data', function (msg) {
+      cmd.stderr.on('data', function(msg) {
         console.error(msg.toString());
       });
     });
