@@ -1,4 +1,5 @@
 'use strict';
+require('./lib/logger');
 const setting = require('./setting');
 const co = require('co');
 const crc32 = require('buffer-crc32');
