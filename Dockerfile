@@ -10,4 +10,4 @@ EXPOSE 80
 
 RUN cd /varnish-agent && npm install --production  --registry=https://registry.npm.taobao.org
 
-CMD cd /varnish-agent && node app
+CMD cd /varnish-agent && NODE_ENV=production node app
