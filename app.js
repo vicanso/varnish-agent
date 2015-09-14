@@ -10,6 +10,7 @@ const fs = require('fs');
 const spawn = require('child_process').spawn;
 const server = require('./lib/server');
 const debug = require('debug')('jt:varnish');
+const _ = require('lodash');
 var registered = false;
 setTimeout(createVcl, 5000);
 server.start();
@@ -52,12 +53,11 @@ function createVcl(currentVersion) {
           yield changeVcl(date, file);
           setting.addVclFile(file);
           currentVersion = version;
-          if (!registered) {
-            yield consul.register();
-            registered = true;
-          }
-
         }
+      }
+      if (!registered) {
+        yield register();
+        registered = true;
       }
     }
     finished();
@@ -67,7 +67,15 @@ function createVcl(currentVersion) {
   });
 }
 
+/**
+ * [varnishd description]
+ * @return {[type]} [description]
+ */
 function varnishd() {
+  if (process.env.DEBUG) {
+    console.warn('debug mode, is not running varnishd');
+    return;
+  }
   let args = '-f /etc/varnish/default.vcl -s malloc,256m -a 0.0.0.0:80 -F'.split(
     ' ');
   let cmd = spawn('varnishd', args);
@@ -87,12 +95,41 @@ function varnishd() {
 
 
 /**
+ * [register description]
+ * @return {[type]} [description]
+ */
+function* register() {
+  let hostName = process.env.HOSTNAME;
+  let hosts = fs.readFileSync('/etc/hosts', 'utf8');
+  // etc hosts中的ip都是正常的，因此正则的匹配考虑的简单一些
+  let reg = new RegExp('((?:[0-9]{1,3}\.){3}[0-9]{1,3})\\s*' + hostName);
+  let address = _.get(reg.exec(hosts), 1);
+  if (!address) {
+    throw new Error('can not get address');
+  }
+  let tags = setting.get('serviceTag').split(',');
+  tags.push('http-ping');
+  yield consul.register({
+    id: hostName,
+    service: 'varnish',
+    address: address,
+    port: 80,
+    tags: _.uniq(tags)
+  });
+}
+
+
+/**
  * [changeVcl description]
  * @param  {[type]} tag  [description]
  * @param  {[type]} file [description]
  * @return {[type]}      [description]
  */
 function* changeVcl(tag, file) {
+  if (process.env.DEBUG) {
+    console.warn('debug mode, not change vcl file');
+    return;
+  }
   /**
    * [loadVcl 加载vcl]
    * @param  {[type]} tag  [description]

@@ -4,10 +4,11 @@ const fs = require('fs');
 const _ = require('lodash');
 const debug = require('debug')('jt:varnish');
 const path = require('path');
+const url = require('url');
 var setting = {
-  consul : process.env.CONSUL || 'http://localhost:8500',
-  backendTag : process.env.BACKEND_TAG || 'http-backend',
-  serviceTag : process.env.SERVICE_TAG || 'varnish'
+  consul: url.parse(process.env.CONSUL || 'http://localhost:8500'),
+  backendTag: process.env.BACKEND_TAG || 'http-backend',
+  serviceTag: process.env.SERVICE_TAG || 'varnish'
 };
 var vclFileList = [];
 
