@@ -1,5 +1,8 @@
 'use strict';
 require('./lib/logger');
+console.log('abaeoaefae');
+setInterval(function() {}, 1000);
+return;
 const setting = require('./setting');
 const co = require('co');
 const crc32 = require('buffer-crc32');
@@ -53,6 +56,7 @@ function createVcl(currentVersion) {
           yield changeVcl(date, file);
           setting.addVclFile(file);
           currentVersion = version;
+          console.log('change %s successful', file);
         }
       }
       if (!registered) {
@@ -83,7 +87,7 @@ function varnishd() {
     console.error(err);
   });
   cmd.on('close', function(code) {
-    process.exit(code)
+    process.exit(code);
   });
   cmd.stdout.on('data', function(msg) {
     console.log(msg.toString());
@@ -108,14 +112,17 @@ function* register() {
     throw new Error('can not get address');
   }
   let tags = setting.get('serviceTag').split(',');
-  tags.push('http-ping');
-  yield consul.register({
+  let data = {
     id: hostName,
     service: 'varnish',
     address: address,
     port: 80,
     tags: _.uniq(tags)
-  });
+  };
+  console.log('register options:' + JSON.stringify(data));
+  tags.push('http-ping');
+  let res = yield consul.register(data);
+  console.log('res text:' + res.text);
 }
 
 

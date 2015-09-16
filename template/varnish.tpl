@@ -73,7 +73,7 @@ sub vcl_recv {
   }
 
   # 不缓存数据处理
-  if(req.url ~ "^/user" || req.url ~ "\?cache=false" || req.url ~ "&cache=false" || req.http.Cache-Control == "no-cache"){
+  if(req.url ~ "/user/" || req.url ~ "\?cache=false" || req.url ~ "&cache=false" || req.http.Cache-Control == "no-cache"){
     return (pass);
   }
 

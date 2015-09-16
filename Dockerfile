@@ -8,6 +8,7 @@ ADD . /varnish-agent
 
 EXPOSE 80
 
-RUN cd /varnish-agent && npm install --production  --registry=https://registry.npm.taobao.org
+RUN cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
+  && cd /varnish-agent && npm install --production  --registry=https://registry.npm.taobao.org
 
 CMD cd /varnish-agent && NODE_ENV=production node app
