@@ -1,8 +1,5 @@
 'use strict';
 require('./lib/logger');
-console.log('abaeoaefae');
-setInterval(function() {}, 1000);
-return;
 const setting = require('./setting');
 const co = require('co');
 const crc32 = require('buffer-crc32');
@@ -39,6 +36,7 @@ function createVcl(currentVersion) {
   }
   co(function*() {
     let serversList = yield varnish.getBackends();
+    console.info('serversList:%s', JSON.stringify(serversList));
     let config = yield varnish.getConfig(serversList);
     debug('varnish config:%j', config);
     if (config) {
@@ -52,11 +50,12 @@ function createVcl(currentVersion) {
         debug('varnish vcl:%s', vcl);
         let file = '/tmp/' + date + '.vcl';
         let result = fs.writeFileSync(file, vcl);
+        console.info('write file:%s successful', file);
         if (!result) {
           yield changeVcl(date, file);
           setting.addVclFile(file);
           currentVersion = version;
-          console.log('change %s successful', file);
+          console.info('change %s successful', file);
         }
       }
       if (!registered) {
@@ -90,7 +89,7 @@ function varnishd() {
     process.exit(code);
   });
   cmd.stdout.on('data', function(msg) {
-    console.log(msg.toString());
+    console.info(msg.toString());
   });
   cmd.stderr.on('data', function(msg) {
     console.error(msg.toString());
@@ -119,10 +118,9 @@ function* register() {
     port: 80,
     tags: _.uniq(tags)
   };
-  console.log('register options:' + JSON.stringify(data));
+  console.info('register options:' + JSON.stringify(data));
   tags.push('http-ping');
-  let res = yield consul.register(data);
-  console.log('res text:' + res.text);
+  yield consul.register(data);
 }
 
 
@@ -157,7 +155,7 @@ function* changeVcl(tag, file) {
         }
       });
       cmd.stdout.on('data', function(msg) {
-        console.log(msg.toString());
+        console.info(msg.toString());
       });
       cmd.stderr.on('data', function(msg) {
         console.error(msg.toString());
@@ -184,7 +182,7 @@ function* changeVcl(tag, file) {
         }
       });
       cmd.stdout.on('data', function(msg) {
-        console.log(msg.toString());
+        console.info(msg.toString());
       });
       cmd.stderr.on('data', function(msg) {
         console.error(msg.toString());
