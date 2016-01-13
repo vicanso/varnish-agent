@@ -137,7 +137,12 @@ sub vcl_backend_response {
 
   # 如果返回的数据ttl为0，设置为不可缓存
   # 对于Set-Cookie的响应设置为不可缓存
-  if(beresp.ttl == 0s || beresp.http.Set-Cookie){
+  if (beresp.ttl <= 0s ||
+    beresp.http.Set-Cookie ||
+    beresp.http.Surrogate-control ~ "no-store" ||
+    (!beresp.http.Surrogate-Control &&
+    beresp.http.Cache-Control ~ "no-cache|no-store|private") ||
+    beresp.http.Vary == "*"){
     set beresp.uncacheable = true;
     set beresp.ttl = 120s;
     return (deliver);
