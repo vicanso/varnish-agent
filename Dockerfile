@@ -6,7 +6,7 @@ MAINTAINER "vicansocanbico@gmail.com"
 
 ADD . /app
 
-EXPOSE 80
+EXPOSE 8080
 
 RUN cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
   && cd /app && npm install --production  --registry=https://registry.npm.taobao.org

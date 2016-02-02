@@ -1,20 +1,22 @@
 'use strict';
 const MicroService = require('micro-service');
 const _ = require('lodash');
+const logger = require('timtam-logger');
+const url = require('url');
 const client = new MicroService(getOptions());
 const varnishGenerator = require('varnish-generator');
-const varnishName = process.env.NAME || process.env.HOSTNAME || `varnish-${Date.now()}`;
+const varnishName = process.env.NAME || `varnish-${process.env.HOSTNAME}` || `varnish-${Date.now()}`;
 const crc32 = require('buffer-crc32');
 const fs = require('fs');
 const spawn = require('child_process').spawn;
 const backendTags = (process.env.BACKEND_TAG || 'backend:http').split(',');
-const interval = 6 * 1000;
+const interval = 60 * 1000;
 const globalConfig = {
 	version: '',
 	vclFile: '',
 	updateList: []
 };
-
+initLogger();
 start();
 
 /**
@@ -32,6 +34,7 @@ function start() {
 		globalConfig.version = version;
 		globalConfig.vclFile = file;
 		setTimeout(loop, interval);
+		console.info(`start varnishd use ${file}`);
 	}).catch(err => {
 		console.error(err);
 	});
@@ -62,6 +65,7 @@ function loop() {
 		if (status === 'success') {
 			globalConfig.version = version;
 			globalConfig.vclFile = file;
+			console.info(`reload varnishd use ${file}`);
 		}
 		setTimeout(loop, interval);
 	}).catch(err => {
@@ -222,4 +226,22 @@ function varnishdLoadVcl(tag, file) {
 	};
 
 	return load().then(use);
+}
+
+
+function initLogger() {
+	const logUrl = process.env.LOG;
+	if (!logUrl) {
+		return;
+	}
+	const urlInfo = url.parse(logUrl);
+	logger.set('app', 'varnish-agent');
+	logger.set('extra', {
+		process: varnishName
+	});
+	logger.wrap(console);
+	logger.add('udp', {
+		port: parseInt(urlInfo.port),
+		host: urlInfo.hostname
+	});
 }

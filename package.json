@@ -22,7 +22,8 @@
     "buffer-crc32": "^0.2.5",
     "lodash": "^4.1.0",
     "micro-service": "0.0.3",
-    "varnish-generator": "0.0.1"
+    "timtam-logger": "^0.3.0",
+    "varnish-generator": "0.0.2"
   },
   "devDependencies": {
     "eslint": "^1.10.3"
