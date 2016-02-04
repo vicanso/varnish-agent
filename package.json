@@ -20,10 +20,10 @@
   "readmeFilename": "README.md",
   "dependencies": {
     "buffer-crc32": "^0.2.5",
-    "lodash": "^4.1.0",
+    "lodash": "^4.2.1",
     "micro-service": "0.0.3",
     "timtam-logger": "^0.3.0",
-    "varnish-generator": "0.0.2"
+    "varnish-generator": "0.0.5"
   },
   "devDependencies": {
     "eslint": "^1.10.3"
