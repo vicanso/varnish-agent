@@ -1,7 +1,7 @@
 {
   "name": "varnish-agent",
   "description": "get backend config from etcd and the generate varnish config file, then reload it",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "author": {
     "name": "vicanso 小墨鱼",
     "email": "vicansocanbico@gmail.com"
@@ -15,12 +15,14 @@
     "url": "https://github.com/vicanso/varnish-agent.git"
   },
   "scripts": {
+    "init": "npm install",
+    "init-production": "npm install --production",
     "test": "node ./node_modules/.bin/eslint index.js"
   },
   "readmeFilename": "README.md",
   "dependencies": {
     "buffer-crc32": "^0.2.5",
-    "lodash": "^4.2.1",
+    "lodash": "^4.4.0",
     "micro-service": "0.0.3",
     "timtam-logger": "^0.3.0",
     "varnish-generator": "0.0.5"

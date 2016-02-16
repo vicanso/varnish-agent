@@ -1,6 +1,6 @@
 # varnish 4.1.0
 
-FROM vicanso/varnish
+FROM mhart/alpine-node
 
 MAINTAINER "vicansocanbico@gmail.com"
 
@@ -8,7 +8,6 @@ ADD . /app
 
 EXPOSE 8080
 
-RUN cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
-  && cd /app && npm install --production  --registry=https://registry.npm.taobao.org
+RUN apk add --update varnish && rm -rf /var/cache/apk/*
 
 CMD cd /app && node index
