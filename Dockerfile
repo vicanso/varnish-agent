@@ -1,6 +1,6 @@
 # varnish 4.1.0
 
-FROM mhart/alpine-node
+FROM mhart/alpine-node:base
 
 MAINTAINER "vicansocanbico@gmail.com"
 

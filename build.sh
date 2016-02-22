@@ -8,4 +8,4 @@ rm -rf node_modules
 
 npm run init-production
 
-docker build -t vicanso/varnish-agent:0.2.0 .
+docker build -t vicanso/varnish-agent:0.2.1 .
