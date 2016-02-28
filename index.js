@@ -39,7 +39,7 @@ function start() {
 		setTimeout(loop, interval);
 		console.info(`start varnishd use ${file}`);
 	}).catch(err => {
-		setTimeout(loop, interval);
+		setTimeout(start, interval);
 		console.error(err);
 	});
 }

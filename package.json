@@ -1,7 +1,7 @@
 {
   "name": "varnish-agent",
   "description": "get backend config from etcd and the generate varnish config file, then reload it",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "author": {
     "name": "vicanso 小墨鱼",
     "email": "vicansocanbico@gmail.com"
