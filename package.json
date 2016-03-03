@@ -1,7 +1,7 @@
 {
   "name": "varnish-agent",
   "description": "get backend config from etcd and the generate varnish config file, then reload it",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "author": {
     "name": "vicanso 小墨鱼",
     "email": "vicansocanbico@gmail.com"
@@ -25,7 +25,7 @@
     "lodash": "^4.4.0",
     "micro-service": "0.0.3",
     "timtam-logger": "^0.3.0",
-    "varnish-generator": "0.0.5"
+    "varnish-generator": "0.0.6"
   },
   "devDependencies": {
     "eslint": "^1.10.3"
