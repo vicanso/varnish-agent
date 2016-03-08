@@ -1,13 +1,9 @@
-rm -rf node_modules
-
-npm run init
-
 npm run test
 
 rm -rf coverage
 
 rm -rf node_modules
 
-npm run init-production
+npm install --production
 
-docker build -t vicanso/varnish-agent:0.2.3 .
+docker build -t vicanso/varnish-agent .

@@ -1,7 +1,7 @@
 {
   "name": "varnish-agent",
   "description": "get backend config from etcd and the generate varnish config file, then reload it",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "author": {
     "name": "vicanso 小墨鱼",
     "email": "vicansocanbico@gmail.com"
@@ -15,21 +15,22 @@
     "url": "https://github.com/vicanso/varnish-agent.git"
   },
   "scripts": {
-    "init": "npm install",
-    "init-production": "npm install --production",
-    "test": "node ./node_modules/.bin/eslint lib/*.js && node ./node_modules/.bin/istanbul cover ./node_modules/.bin/_mocha ./test/*.js --"
+    "pretest": "npm install",
+    "test": "node ./node_modules/.bin/eslint lib/*.js && NODE_ENV=test node ./node_modules/.bin/istanbul cover ./node_modules/.bin/_mocha ./test/*.js --"
   },
   "readmeFilename": "README.md",
   "dependencies": {
     "buffer-crc32": "^0.2.5",
-    "lodash": "^4.4.0",
+    "lodash": "^4.6.1",
     "micro-service": "0.0.3",
+    "mkdirp": "^0.5.1",
     "timtam-logger": "^0.3.0",
-    "varnish-generator": "0.0.7"
+    "varnish-generator": "0.0.8"
   },
   "devDependencies": {
     "eslint": "^1.10.3",
     "istanbul": "^0.4.2",
-    "mocha": "^2.4.5"
+    "mocha": "^2.4.5",
+    "rimraf": "^2.5.2"
   }
 }
