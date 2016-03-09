@@ -10,3 +10,5 @@ exports.name = process.env.NAME || `varnish-${process.env.HOSTNAME || Date.now()
 exports.tags = (process.env.BACKEND_TAG || 'backend:http').split(',');
 
 exports.pwd = process.env.PASSWORD || 'pwd';
+
+exports.influx = process.env.INFLUX;
