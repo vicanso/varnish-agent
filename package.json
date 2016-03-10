@@ -24,6 +24,7 @@
     "lodash": "^4.6.1",
     "micro-service": "0.0.3",
     "mkdirp": "^0.5.1",
+    "simple-influx": "0.0.7",
     "timtam-logger": "^0.3.0",
     "varnish-generator": "0.0.8"
   },
