@@ -1,7 +1,7 @@
 {
   "name": "varnish-agent",
   "description": "get backend config from etcd and the generate varnish config file, then reload it",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "author": {
     "name": "vicanso 小墨鱼",
     "email": "vicansocanbico@gmail.com"
@@ -21,11 +21,11 @@
   "readmeFilename": "README.md",
   "dependencies": {
     "buffer-crc32": "^0.2.5",
-    "lodash": "^4.6.1",
+    "lodash": "^4.7.0",
     "micro-service": "0.0.3",
     "mkdirp": "^0.5.1",
-    "simple-influx": "0.0.7",
-    "timtam-logger": "^0.3.0",
+    "influxdb-nodejs": "0.0.11",
+    "timtam-logger": "^0.3.2",
     "varnish-generator": "0.0.8"
   },
   "devDependencies": {
