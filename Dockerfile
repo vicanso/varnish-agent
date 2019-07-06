@@ -27,12 +27,6 @@ ENV VERSION 6.2.0-r1
 
 COPY --from=builder /varnish-agent/vagent /usr/local/bin/vagent
 
-RUN addgroup -g 1000 vagent \
-  && adduser -u 1000 -G vagent -s /bin/sh -D vagent \
-  && apk add --no-cache varnish=$VERSION
-
-USER vagent
-
-WORKDIR /home/vagent
+RUN apk add --no-cache varnish=$VERSION
 
 CMD ["vagent"]
