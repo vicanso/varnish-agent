@@ -36,6 +36,14 @@ func main() {
 	if addr == "" {
 		addr = ":4000"
 	}
+	directors, err := ins.GetDirectors()
+	if err != nil {
+		panic(err)
+	}
+	// 如果未配置有driector时，只启动agent
+	if len(directors) == 0 {
+		server.NewServer(ins, addr)
+	}
 	go server.NewServer(ins, addr)
 
 	go func() {
