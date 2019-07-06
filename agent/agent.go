@@ -135,7 +135,7 @@ func (ins *Agent) generateVcl() (file string, hash string, err error) {
 	if err != nil {
 		return
 	}
-	err = ioutil.WriteFile(file, []byte(vcl), 0600)
+	err = ioutil.WriteFile(file, []byte(vcl), 0644)
 	if err != nil {
 		return
 	}
