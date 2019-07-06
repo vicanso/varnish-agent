@@ -14,3 +14,13 @@ before_install:
 script:
   - make test
   - docker build -t varnish-agent .
+
+
+after_success:
+  - export VERSION=0.0.1
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+  - docker tag varnish-agent $DOCKER_USERNAME/varnish-agent:$VERSION
+  - docker tag varnish-agent $DOCKER_USERNAME/varnish-agent:latest
+  - docker push $DOCKER_USERNAME/varnish-agent:$VERSION
+  - docker push $DOCKER_USERNAME/varnish-agent:latest
+  - docker images
