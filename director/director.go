@@ -167,6 +167,10 @@ func (s Directors) Less(i, j int) bool {
 
 // GetVclSelector get selector vcl
 func (s Directors) GetVclSelector() (vcl string, err error) {
+	// 如果没有director直接返回
+	if len(s) == 0 {
+		return
+	}
 	for _, d := range s {
 		err = d.validate()
 		if err != nil {
