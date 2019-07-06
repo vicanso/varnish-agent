@@ -26,7 +26,10 @@ import (
 	"github.com/vicanso/cod"
 	basicauth "github.com/vicanso/cod-basic-auth"
 	bodyparser "github.com/vicanso/cod-body-parser"
+	compress "github.com/vicanso/cod-compress"
 	errorhandler "github.com/vicanso/cod-error-handler"
+	etag "github.com/vicanso/cod-etag"
+	fresh "github.com/vicanso/cod-fresh"
 	responder "github.com/vicanso/cod-responder"
 	staticServe "github.com/vicanso/cod-static-serve"
 	"github.com/vicanso/hes"
@@ -79,6 +82,11 @@ func sendFile(c *cod.Context, file string) (err error) {
 // NewServer create a server
 func NewServer(ins *agent.Agent, addr string) {
 	d := cod.New()
+
+	d.Use(compress.NewDefault())
+
+	d.Use(fresh.NewDefault())
+	d.Use(etag.NewDefault())
 
 	d.Use(responder.NewDefault())
 	d.Use(bodyparser.NewDefault())

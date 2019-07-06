@@ -35,10 +35,14 @@ class BasicInfo extends React.Component {
     if (basicInfo) {
       const arr = [];
       Object.keys(basicInfo).forEach(key => {
+        let value = basicInfo[key];
+        if (Array.isArray(value)) {
+          value = value.join(' ');
+        }
         arr.push(
           <li key={key}>
             <span className="key">{key}:</span>
-            <span>{basicInfo[key]}</span>
+            <span>{value}</span>
           </li>
         );
       });
