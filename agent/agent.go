@@ -130,7 +130,11 @@ func (ins *Agent) Save(s director.Directors) (err error) {
 }
 
 func (ins *Agent) generateVcl() (file string, hash string, err error) {
-	file = os.TempDir() + time.Now().Format("20060102T150405")
+	dir, _ := os.UserHomeDir()
+	if dir == "" {
+		dir = os.TempDir()
+	}
+	file = dir + time.Now().Format("20060102T150405")
 	vcl, err := ins.GetVcl()
 	if err != nil {
 		return
