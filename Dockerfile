@@ -34,3 +34,5 @@ RUN addgroup -g 1000 vagent \
 USER vagent
 
 WORKDIR /home/vagent
+
+CMD ["vagent"]

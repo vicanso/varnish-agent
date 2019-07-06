@@ -40,7 +40,7 @@ var (
 )
 
 var (
-	box = packr.New("assets", "../web/build")
+	box = packr.New("statics", "../web/build")
 )
 
 type (
