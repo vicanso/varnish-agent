@@ -255,8 +255,16 @@ func (s Directors) GetVcl() (vcl string, err error) {
 			return
 		}
 
-		backendList = append(backendList, backend)
-		initList = append(initList, init)
+		if backend != "" {
+			backendList = append(backendList, backend)
+		}
+		if init != "" {
+			initList = append(initList, init)
+		}
+	}
+	if len(initList) == 0 || len(backendList) == 0 {
+		err = errors.New("director can't be empty")
+		return
 	}
 	template = strings.Replace(template, "### BACKEND LIST ###", strings.Join(backendList, "\n"), 1)
 

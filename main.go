@@ -36,27 +36,20 @@ func main() {
 	if addr == "" {
 		addr = ":4000"
 	}
-	directors, err := ins.GetDirectors()
-	if err != nil {
-		panic(err)
-	}
-	// 如果未配置有driector时，只启动agent
-	if len(directors) == 0 {
-		server.NewServer(ins, addr)
-	}
-	go server.NewServer(ins, addr)
+	go ins.Start()
 
 	go func() {
 		ins.Config.Watch(func() {
-			e := ins.ReloadVcl()
-			if e != nil {
+			if !ins.IsRunning() {
+				go ins.Start()
+				return
+			}
+			err := ins.ReloadVcl()
+			if err != nil {
 				fmt.Println("reload vcl fail, " + err.Error())
 			}
 		})
 	}()
 
-	err = ins.Exec()
-	if err != nil {
-		panic(err)
-	}
+	server.NewServer(ins, addr)
 }

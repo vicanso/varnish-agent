@@ -24,6 +24,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/go-yaml/yaml"
@@ -31,17 +32,27 @@ import (
 	"github.com/vicanso/varnish-agent/director"
 )
 
+const (
+	// StatusNotRunning not running status
+	StatusNotRunning = iota
+	// StatusRunning running status
+	StatusRunning
+)
+
 type (
 	// VarnishConfig vcl config
 	VarnishConfig struct {
-		Pid     int      `json:"pid,omitempty"`
-		Args    []string `json:"args,omitempty"`
-		Version string   `json:"version,omitempty"`
-		File    string   `json:"file,omitempty"`
-		Hash    string   `json:"hash,omitempty"`
+		Pid        int      `json:"pid,omitempty"`
+		Args       []string `json:"args,omitempty"`
+		Version    string   `json:"version,omitempty"`
+		File       string   `json:"file,omitempty"`
+		Hash       string   `json:"hash,omitempty"`
+		StartedAt  string   `json:"startedAt,omitempty"`
+		ReloadedAt string   `json:"reloadedAt,omitempty"`
 	}
 	// Agent varnish agent
 	Agent struct {
+		status        int32
 		Config        config.ReadWriter
 		VarnishConfig *VarnishConfig
 	}
@@ -55,6 +66,10 @@ func indexOf(arr []string, key string) int {
 		}
 	}
 	return index
+}
+
+func getTime() string {
+	return time.Now().Format(time.RFC3339)
 }
 
 // NewAgent create an agent
@@ -129,13 +144,27 @@ func (ins *Agent) Save(s director.Directors) (err error) {
 	return
 }
 
+func (ins *Agent) validateVcl(file string) (err error) {
+	// 加载 vcl 配置
+	cmd := exec.Command("varnishd", "-f", file, "-C")
+	err = cmd.Run()
+	if err != nil {
+		return
+	}
+	return
+}
+
 func (ins *Agent) generateVcl() (file string, hash string, err error) {
-	file = os.TempDir() + "/" + time.Now().Format("20060102T150405")
+	file = filepath.Join(os.TempDir(), time.Now().Format("20060102T150405"))
 	vcl, err := ins.GetVcl()
 	if err != nil {
 		return
 	}
 	err = ioutil.WriteFile(file, []byte(vcl), 0644)
+	if err != nil {
+		return
+	}
+	err = ins.validateVcl(file)
 	if err != nil {
 		return
 	}
@@ -177,6 +206,7 @@ func (ins *Agent) ReloadVcl() (err error) {
 	}
 	ins.VarnishConfig.File = file
 	ins.VarnishConfig.Hash = hash
+	ins.VarnishConfig.ReloadedAt = getTime()
 	return
 }
 
@@ -212,12 +242,13 @@ func (ins *Agent) getArgs() []string {
 	return args
 }
 
-// Exec execute varnish
-func (ins *Agent) Exec() (err error) {
+// Start start varnish
+func (ins *Agent) Start() (err error) {
 	file, hash, err := ins.generateVcl()
 	if err != nil {
 		return
 	}
+	atomic.StoreInt32(&ins.status, StatusRunning)
 	// 启动varnish
 	args := ins.getArgs()
 	ins.VarnishConfig.Args = args[:]
@@ -233,13 +264,20 @@ func (ins *Agent) Exec() (err error) {
 
 	ins.VarnishConfig.File = file
 	ins.VarnishConfig.Hash = hash
+	ins.VarnishConfig.StartedAt = getTime()
 	go func() {
 		time.Sleep(5 * time.Second)
 		ins.VarnishConfig.Pid = cmd.Process.Pid
 	}()
 	err = cmd.Run()
+	atomic.StoreInt32(&ins.status, StatusNotRunning)
 	if err != nil {
 		return
 	}
 	return
+}
+
+// IsRunning is running
+func (ins *Agent) IsRunning() bool {
+	return atomic.LoadInt32(&ins.status) == StatusRunning
 }
