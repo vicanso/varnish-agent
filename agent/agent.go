@@ -15,6 +15,7 @@
 package agent
 
 import (
+	"bytes"
 	"crypto/sha1"
 	"encoding/hex"
 	"errors"
@@ -147,8 +148,11 @@ func (ins *Agent) Save(s director.Directors) (err error) {
 func (ins *Agent) validateVcl(file string) (err error) {
 	// 加载 vcl 配置
 	cmd := exec.Command("varnishd", "-f", file, "-C")
+	errBuf := new(bytes.Buffer)
+	cmd.Stderr = errBuf
 	err = cmd.Run()
 	if err != nil {
+		err = errors.New(errBuf.String())
 		return
 	}
 	return

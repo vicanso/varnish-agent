@@ -11,6 +11,14 @@ probe basicProbe {
 }
 
 # backend start
+backend agentBackend0 {
+  .host = "127.0.0.1";
+  .port = "4000";
+  .connect_timeout = 3s;
+  .first_byte_timeout = 5s;
+  .between_bytes_timeout = 2s;
+  .probe = basicProbe;
+}
 backend apiBackend0 {
   .host = "127.0.0.1";
   .port = "3001";
@@ -80,6 +88,8 @@ backend defaultBackend1 {
 
 # init start
 sub vcl_init {
+  new agentBackend = directors.round_robin();
+  agentBackend.add_backend(agentBackend0);
   new apiBackend = directors.round_robin();
   apiBackend.add_backend(apiBackend0);
   apiBackend.add_backend(apiBackend1);
@@ -129,6 +139,10 @@ sub vcl_recv {
     set req.backend_hint = apiBackend.backend();
   } else if (true) {
     set req.backend_hint = defaultBackend.backend(req.http.cookie);
+  }
+
+  if (req.url ~ "^/agent") {
+    set req.backend_hint = agentBackend.backend();
   }
 
   if (req.method != "GET" &&

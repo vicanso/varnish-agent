@@ -32,18 +32,9 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	addr := os.Getenv("ADDR")
-	if addr == "" {
-		addr = ":4000"
-	}
-	go ins.Start()
-
+	go server.NewServer(ins, ":4000")
 	go func() {
 		ins.Config.Watch(func() {
-			if !ins.IsRunning() {
-				go ins.Start()
-				return
-			}
 			err := ins.ReloadVcl()
 			if err != nil {
 				fmt.Println("reload vcl fail, " + err.Error())
@@ -51,5 +42,8 @@ func main() {
 		})
 	}()
 
-	server.NewServer(ins, addr)
+	err = ins.Start()
+	if err != nil {
+		panic(err)
+	}
 }

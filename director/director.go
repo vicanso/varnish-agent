@@ -262,10 +262,7 @@ func (s Directors) GetVcl() (vcl string, err error) {
 			initList = append(initList, init)
 		}
 	}
-	if len(initList) == 0 || len(backendList) == 0 {
-		err = errors.New("director can't be empty")
-		return
-	}
+
 	template = strings.Replace(template, "### BACKEND LIST ###", strings.Join(backendList, "\n"), 1)
 
 	template = strings.Replace(template, "### INIT ###", strings.Join(initList, "\n"), 1)

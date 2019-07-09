@@ -92,10 +92,13 @@ func NewServer(ins *agent.Agent, addr string) {
 	d.Use(bodyparser.NewDefault())
 	d.Use(errorhandler.NewDefault())
 	auth := os.Getenv("AUTH")
+	authMid := func(c *cod.Context) error {
+		return c.Next()
+	}
 	// 使用 basic auth 认证
 	if auth != "" {
 		authInfo := strings.Split(auth, ":")
-		d.Use(basicauth.New(basicauth.Config{
+		authMid = basicauth.New(basicauth.Config{
 			Validate: func(account, pwd string, c *cod.Context) (bool, error) {
 				if account != authInfo[0] {
 					return false, nil
@@ -105,7 +108,7 @@ func NewServer(ins *agent.Agent, addr string) {
 				}
 				return true, nil
 			},
-		}))
+		})
 	}
 
 	getDirector := func(name string) (s director.Directors, index int, err error) {
@@ -126,6 +129,10 @@ func NewServer(ins *agent.Agent, addr string) {
 	sf := &staticFile{
 		box: box,
 	}
+	d.GET("/ping", func(c *cod.Context) error {
+		c.Body = "pong"
+		return nil
+	})
 	d.GET("/", func(c *cod.Context) error {
 		c.CacheMaxAge("10s")
 		return sendFile(c, "index.html")
@@ -140,8 +147,10 @@ func NewServer(ins *agent.Agent, addr string) {
 		DisableLastModified: true,
 	}))
 
+	g := cod.NewGroup("", authMid)
+
 	// 获取所有directors
-	d.GET("/directors", func(c *cod.Context) (err error) {
+	g.GET("/directors", func(c *cod.Context) (err error) {
 		s, err := ins.GetDirectors()
 		if err != nil {
 			return
@@ -154,7 +163,7 @@ func NewServer(ins *agent.Agent, addr string) {
 	})
 
 	// 获取单个director
-	d.GET("/directors/:name", func(c *cod.Context) (err error) {
+	g.GET("/directors/:name", func(c *cod.Context) (err error) {
 		s, index, err := getDirector(c.Param("name"))
 		if err != nil {
 			return
@@ -164,7 +173,7 @@ func NewServer(ins *agent.Agent, addr string) {
 	})
 
 	// 添加director
-	d.POST("/directors", func(c *cod.Context) (err error) {
+	g.POST("/directors", func(c *cod.Context) (err error) {
 		d := &director.Director{}
 		err = json.Unmarshal(c.RequestBody, d)
 		if err != nil {
@@ -192,7 +201,7 @@ func NewServer(ins *agent.Agent, addr string) {
 	})
 
 	// 更新 director
-	d.PATCH("/directors/:name", func(c *cod.Context) (err error) {
+	g.PATCH("/directors/:name", func(c *cod.Context) (err error) {
 		d := &director.Director{}
 		err = json.Unmarshal(c.RequestBody, d)
 		if err != nil {
@@ -218,7 +227,7 @@ func NewServer(ins *agent.Agent, addr string) {
 	})
 
 	// 删除director
-	d.DELETE("/directors/:name", func(c *cod.Context) (err error) {
+	g.DELETE("/directors/:name", func(c *cod.Context) (err error) {
 		s, index, err := getDirector(c.Param("name"))
 		if err != nil {
 			return
@@ -237,7 +246,7 @@ func NewServer(ins *agent.Agent, addr string) {
 	})
 
 	// 获取 vcl 配置
-	d.GET("/vcl", func(c *cod.Context) (err error) {
+	g.GET("/vcl", func(c *cod.Context) (err error) {
 		vcl, err := ins.GetVcl()
 		if err != nil {
 			return
@@ -248,10 +257,12 @@ func NewServer(ins *agent.Agent, addr string) {
 		return
 	})
 
-	d.GET("/config", func(c *cod.Context) (err error) {
+	g.GET("/config", func(c *cod.Context) (err error) {
 		c.Body = ins.VarnishConfig
 		return
 	})
+
+	d.AddGroup(g)
 
 	err := d.ListenAndServe(addr)
 	if err != nil {
