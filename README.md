@@ -30,7 +30,6 @@ probe basicProbe {
 
 ```bash
 docker run -it --rm \
-  -p 4000:4000 \
   -p 8080:8080 \
   -e CONFIG=etcd://192.168.31.176:2379/varnish-test \
   -e AUTH=user:pwd \

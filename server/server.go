@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
+	"net/http"
 	"os"
 	"sort"
 	"strings"
@@ -30,6 +31,7 @@ import (
 	errorhandler "github.com/vicanso/cod-error-handler"
 	etag "github.com/vicanso/cod-etag"
 	fresh "github.com/vicanso/cod-fresh"
+	recover "github.com/vicanso/cod-recover"
 	responder "github.com/vicanso/cod-responder"
 	staticServe "github.com/vicanso/cod-static-serve"
 	"github.com/vicanso/hes"
@@ -82,6 +84,21 @@ func sendFile(c *cod.Context, file string) (err error) {
 // NewServer create a server
 func NewServer(ins *agent.Agent, addr string) {
 	d := cod.New()
+
+	agentPrefix := "/agent"
+	d.Pre(func(req *http.Request) {
+		path := req.URL.Path
+		if strings.HasPrefix(path, agentPrefix) {
+			path = path[len(agentPrefix):]
+			if path == "" {
+				path = "/"
+			}
+			req.URL.Path = path
+		}
+	})
+
+	// 捕捉panic异常，避免程序崩溃
+	d.Use(recover.New())
 
 	d.Use(compress.NewDefault())
 
