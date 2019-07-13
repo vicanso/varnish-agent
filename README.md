@@ -21,20 +21,20 @@ probe basicProbe {
 参数说明：
 
 - `CONFIG` 配置etcd的连接地址，此参数必须指定，如`CONFIG=etcd://192.168.31.176:2379/varnish-test`
-- `ADDR` 配置agent的监听地址，默认为`:4000`
 - `AUTH` agent的认证配置，如`AUTH=user:pwd`，如果不配置则不使用认证，建议指定此参数
-- `PARAMS` varnish的启动参数，如`PARAMS="-a :8080 -s malloc,256m"`，需要注意的是，varnish的启动参数默认会添加`-F -p default_ttl=0`，而`-a`如果未指定，则指定为`:8080`，`-s`如果未指定，则指定为`malloc,1G`
+- `PARAMS` varnish的启动参数，如`PARAMS="-a :8080 -s malloc,256m"`，需要注意的是，varnish的启动参数默认会添加`-F -p default_ttl=0`，而`-a`如果未指定，则指定为`:8080`，`-s`如果未指定，则指定为`malloc,1G`，一般不需要调整此参数
 
-
-在首次启动时，因为此时`etcd`中无相关配置信息，因此只会单独启动`agent`，其中4000为默认的agent监听端口，8080为varnish监听端口。
 
 ```bash
-docker run -it --rm \
+docker run -d --restart=always \
   -p 8080:8080 \
-  -e CONFIG=etcd://192.168.31.176:2379/varnish-test \
+  -e CONFIG=etcd://10.254.136.81:2379/varnish \
   -e AUTH=user:pwd \
+  --name varnish-agent \
   vicanso/varnish-agent
 ```
+
+启动成功后，访问`http://127.0.0.1:8080/agent/`，则可进入管理后台。
 
 
 ### 添加director
@@ -43,13 +43,6 @@ docker run -it --rm \
 
 ![](./images/directors.png)
 
-在添加成功之后，需要重新启动，因为在添加第一个director之前，agent在无法获取director列表时，不会启动varnish，后续的调整则不再需要重启，会热更新其配置。
+在更新相关配置后，会自动更新加载最新的配置文件（其它实例也会同时更新），当前最新的配置可在`Basic Info`中查看，需要注意的是，由于file是根据时间生成，因此不同实例有可能不一致，判断配置文件是否一致应该根据`hash`值。
 
-```bash
-docker run -d --restart=always \
-  -p 4000:4000 \
-  -p 8080:8080 \
-  -e CONFIG=etcd://192.168.31.176:2379/varnish-test \
-  -e AUTH=user:pwd \
-  vicanso/varnish-agent
-```
+![](./images/basic-info.png)
