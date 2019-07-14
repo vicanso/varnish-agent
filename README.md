@@ -1,6 +1,6 @@
 # varnish-agent
 
-`varnish-agent`提供界面化的配置管理，配置信息保存于`etcd`中，当配置信息有更新时，自动更新配置并重新加载，方便多实例的配置管理。
+`varnish-agent`提供界面化的配置管理，配置信息保存于`etcd`中，当配置信息有更新时，自动更新配置并重新加载，方便多实例的配置管理。`varnish-agent`设置的varnish默认的`ttl`为0，因此如果不设置`Cache-Control`的所有请求都为不可缓存，尽量使用`Cache-Control`来控制接口的缓存时间。
 
 需要注意，`varnish-agent`默认的`probe`如下：
 
