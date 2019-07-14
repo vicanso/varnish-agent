@@ -85,7 +85,7 @@ func sendFile(c *cod.Context, file string) (err error) {
 func NewServer(ins *agent.Agent, addr string) {
 	d := cod.New()
 
-	agentPrefix := "/agent"
+	agentPrefix := ins.AdminPath
 	d.Pre(func(req *http.Request) {
 		path := req.URL.Path
 		if strings.HasPrefix(path, agentPrefix) {

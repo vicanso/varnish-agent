@@ -53,6 +53,7 @@ type (
 	}
 	// Agent varnish agent
 	Agent struct {
+		AdminPath     string
 		status        int32
 		Config        config.ReadWriter
 		VarnishConfig *VarnishConfig
@@ -83,8 +84,13 @@ func NewAgent(uri string) (*Agent, error) {
 	if err != nil {
 		return nil, err
 	}
+	adminPath := os.Getenv("ADMIN_PATH")
+	if adminPath == "" {
+		adminPath = "/agent"
+	}
 	return &Agent{
-		Config: rw,
+		AdminPath: adminPath,
+		Config:    rw,
 		VarnishConfig: &VarnishConfig{
 			Version: os.Getenv("VERSION"),
 		},
@@ -120,6 +126,7 @@ func (ins *Agent) GetVcl() (vcl string, err error) {
 	if err != nil {
 		return
 	}
+	vcl = strings.Replace(vcl, "^{ADMIN_PATH}", "^"+ins.AdminPath, 1)
 
 	return
 }

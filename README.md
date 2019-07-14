@@ -22,6 +22,7 @@ probe basicProbe {
 
 - `CONFIG` 配置etcd的连接地址，此参数必须指定，如`CONFIG=etcd://192.168.31.176:2379/varnish-test`
 - `AUTH` agent的认证配置，如`AUTH=user:pwd`，如果不配置则不使用认证，建议指定此参数
+- `ADMIN_PATH` 管理后台的路径，如果不配置，则为`/agent`
 - `PARAMS` varnish的启动参数，如`PARAMS="-a :8080 -s malloc,256m"`，需要注意的是，varnish的启动参数默认会添加`-F -p default_ttl=0`，而`-a`如果未指定，则指定为`:8080`，`-s`如果未指定，则指定为`malloc,1G`，一般不需要调整此参数
 
 
@@ -30,11 +31,12 @@ docker run -d --restart=always \
   -p 8080:8080 \
   -e CONFIG=etcd://10.254.136.81:2379/varnish \
   -e AUTH=user:pwd \
+  -e ADMIN_PATH=/@agent \
   --name varnish-agent \
   vicanso/varnish-agent
 ```
 
-启动成功后，访问`http://127.0.0.1:8080/agent/`，则可进入管理后台。
+启动成功后，访问`http://127.0.0.1:8080/@agent/`，则可进入管理后台。
 
 
 ### 添加director

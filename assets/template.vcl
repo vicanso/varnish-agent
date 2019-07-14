@@ -59,7 +59,7 @@ sub vcl_recv {
 
 ### BACKEND SELECT ###
 
-  if (req.url ~ "^/agent") {
+  if (req.url ~ "^{ADMIN_PATH}") {
     set req.backend_hint = agentBackend.backend();
   }
 

@@ -141,7 +141,7 @@ sub vcl_recv {
     set req.backend_hint = defaultBackend.backend(req.http.cookie);
   }
 
-  if (req.url ~ "^/agent") {
+  if (req.url ~ "^{ADMIN_PATH}") {
     set req.backend_hint = agentBackend.backend();
   }
 
