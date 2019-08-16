@@ -6,19 +6,18 @@ require (
 	github.com/go-yaml/yaml v2.1.0+incompatible
 	github.com/gobuffalo/packr/v2 v2.5.2
 	github.com/gogo/protobuf v1.2.1 // indirect
-	github.com/golang/protobuf v1.3.1 // indirect
-	github.com/stretchr/testify v1.3.0
-	github.com/vicanso/cod v0.1.5
-	github.com/vicanso/cod-basic-auth v0.0.3
-	github.com/vicanso/cod-body-parser v0.0.4
-	github.com/vicanso/cod-compress v0.0.7
-	github.com/vicanso/cod-error-handler v0.0.4
-	github.com/vicanso/cod-etag v0.0.3
-	github.com/vicanso/cod-fresh v0.0.3
-	github.com/vicanso/cod-recover v0.0.5
-	github.com/vicanso/cod-responder v0.0.6
-	github.com/vicanso/cod-static-serve v0.0.4
+	github.com/golang/protobuf v1.3.2 // indirect
+	github.com/vicanso/elton v0.2.0
+	github.com/vicanso/elton-basic-auth v0.1.0
+	github.com/vicanso/elton-body-parser v0.1.1
+	github.com/vicanso/elton-compress v0.1.0
+	github.com/vicanso/elton-error-handler v0.1.0
+	github.com/vicanso/elton-etag v0.1.0
+	github.com/vicanso/elton-fresh v0.1.0
+	github.com/vicanso/elton-recover v0.1.0
+	github.com/vicanso/elton-responder v0.1.0
+	github.com/vicanso/elton-static-serve v0.1.0
 	github.com/vicanso/hes v0.2.1
 	go.etcd.io/etcd v3.3.13+incompatible
-	google.golang.org/grpc v1.21.1 // indirect
+	google.golang.org/grpc v1.23.0 // indirect
 )

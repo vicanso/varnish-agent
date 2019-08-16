@@ -24,16 +24,16 @@ import (
 	"strings"
 
 	"github.com/gobuffalo/packr/v2"
-	"github.com/vicanso/cod"
-	basicauth "github.com/vicanso/cod-basic-auth"
-	bodyparser "github.com/vicanso/cod-body-parser"
-	compress "github.com/vicanso/cod-compress"
-	errorhandler "github.com/vicanso/cod-error-handler"
-	etag "github.com/vicanso/cod-etag"
-	fresh "github.com/vicanso/cod-fresh"
-	recover "github.com/vicanso/cod-recover"
-	responder "github.com/vicanso/cod-responder"
-	staticServe "github.com/vicanso/cod-static-serve"
+	"github.com/vicanso/elton"
+	basicauth "github.com/vicanso/elton-basic-auth"
+	bodyparser "github.com/vicanso/elton-body-parser"
+	compress "github.com/vicanso/elton-compress"
+	errorhandler "github.com/vicanso/elton-error-handler"
+	etag "github.com/vicanso/elton-etag"
+	fresh "github.com/vicanso/elton-fresh"
+	recover "github.com/vicanso/elton-recover"
+	responder "github.com/vicanso/elton-responder"
+	staticServe "github.com/vicanso/elton-static-serve"
 	"github.com/vicanso/hes"
 	"github.com/vicanso/varnish-agent/agent"
 	"github.com/vicanso/varnish-agent/director"
@@ -71,7 +71,7 @@ func (sf *staticFile) NewReader(file string) (io.Reader, error) {
 	return bytes.NewReader(buf), nil
 }
 
-func sendFile(c *cod.Context, file string) (err error) {
+func sendFile(c *elton.Context, file string) (err error) {
 	buf, err := box.Find(file)
 	if err != nil {
 		return
@@ -83,7 +83,7 @@ func sendFile(c *cod.Context, file string) (err error) {
 
 // NewServer create a server
 func NewServer(ins *agent.Agent, addr string) {
-	d := cod.New()
+	d := elton.New()
 
 	agentPrefix := ins.AdminPath
 	d.Pre(func(req *http.Request) {
@@ -109,14 +109,14 @@ func NewServer(ins *agent.Agent, addr string) {
 	d.Use(bodyparser.NewDefault())
 	d.Use(errorhandler.NewDefault())
 	auth := os.Getenv("AUTH")
-	authMid := func(c *cod.Context) error {
+	authMid := func(c *elton.Context) error {
 		return c.Next()
 	}
 	// 使用 basic auth 认证
 	if auth != "" {
 		authInfo := strings.Split(auth, ":")
 		authMid = basicauth.New(basicauth.Config{
-			Validate: func(account, pwd string, c *cod.Context) (bool, error) {
+			Validate: func(account, pwd string, c *elton.Context) (bool, error) {
 				if account != authInfo[0] {
 					return false, nil
 				}
@@ -146,11 +146,11 @@ func NewServer(ins *agent.Agent, addr string) {
 	sf := &staticFile{
 		box: box,
 	}
-	d.GET("/ping", func(c *cod.Context) error {
+	d.GET("/ping", func(c *elton.Context) error {
 		c.Body = "pong"
 		return nil
 	})
-	d.GET("/", func(c *cod.Context) error {
+	d.GET("/", func(c *elton.Context) error {
 		c.CacheMaxAge("10s")
 		return sendFile(c, "index.html")
 	})
@@ -164,10 +164,10 @@ func NewServer(ins *agent.Agent, addr string) {
 		DisableLastModified: true,
 	}))
 
-	g := cod.NewGroup("", authMid)
+	g := elton.NewGroup("", authMid)
 
 	// 获取所有directors
-	g.GET("/directors", func(c *cod.Context) (err error) {
+	g.GET("/directors", func(c *elton.Context) (err error) {
 		s, err := ins.GetDirectors()
 		if err != nil {
 			return
@@ -180,7 +180,7 @@ func NewServer(ins *agent.Agent, addr string) {
 	})
 
 	// 获取单个director
-	g.GET("/directors/:name", func(c *cod.Context) (err error) {
+	g.GET("/directors/:name", func(c *elton.Context) (err error) {
 		s, index, err := getDirector(c.Param("name"))
 		if err != nil {
 			return
@@ -190,7 +190,7 @@ func NewServer(ins *agent.Agent, addr string) {
 	})
 
 	// 添加director
-	g.POST("/directors", func(c *cod.Context) (err error) {
+	g.POST("/directors", func(c *elton.Context) (err error) {
 		d := &director.Director{}
 		err = json.Unmarshal(c.RequestBody, d)
 		if err != nil {
@@ -218,7 +218,7 @@ func NewServer(ins *agent.Agent, addr string) {
 	})
 
 	// 更新 director
-	g.PATCH("/directors/:name", func(c *cod.Context) (err error) {
+	g.PATCH("/directors/:name", func(c *elton.Context) (err error) {
 		d := &director.Director{}
 		err = json.Unmarshal(c.RequestBody, d)
 		if err != nil {
@@ -244,7 +244,7 @@ func NewServer(ins *agent.Agent, addr string) {
 	})
 
 	// 删除director
-	g.DELETE("/directors/:name", func(c *cod.Context) (err error) {
+	g.DELETE("/directors/:name", func(c *elton.Context) (err error) {
 		s, index, err := getDirector(c.Param("name"))
 		if err != nil {
 			return
@@ -263,7 +263,7 @@ func NewServer(ins *agent.Agent, addr string) {
 	})
 
 	// 获取 vcl 配置
-	g.GET("/vcl", func(c *cod.Context) (err error) {
+	g.GET("/vcl", func(c *elton.Context) (err error) {
 		vcl, err := ins.GetVcl()
 		if err != nil {
 			return
@@ -274,7 +274,7 @@ func NewServer(ins *agent.Agent, addr string) {
 		return
 	})
 
-	g.GET("/config", func(c *cod.Context) (err error) {
+	g.GET("/config", func(c *elton.Context) (err error) {
 		c.Body = ins.VarnishConfig
 		return
 	})
